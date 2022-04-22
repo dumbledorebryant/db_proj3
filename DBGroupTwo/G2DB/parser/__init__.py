@@ -63,11 +63,11 @@ def create(action):
                 null_status.append('')
                 unique_status.append('')
             elif len(tmp)==4:
-                if tmp[2].upper()!='NOT_NULL' and tmp[2].upper()!='NULL': raise Exception('ERROR: Invalid syntax.')
-                if tmp[3].upper()!='NOT_UNIQUE' and tmp[3].upper()!='UNIQUE': raise Exception('ERROR: Invalid syntax.')
+                if tmp[2].upper()!='NOT_NULL' and tmp[2].upper()!='NULL': raise Exception('[ERROR]: Invalid syntax.')
+                if tmp[3].upper()!='NOT_UNIQUE' and tmp[3].upper()!='UNIQUE': raise Exception('[ERROR]: Invalid syntax.')
                 null_status.append(tmp[2].upper())
                 unique_status.append(tmp[3].upper())
-            else: raise Exception('ERROR: Invalid syntax.')
+            else: raise Exception('[ERROR]: Invalid command.')
         # print(attrs)
         # print(_type)
         # print(null_status)
@@ -92,7 +92,7 @@ def create(action):
                                 break
                             else:
                                 primary_key.append(table_info.pop(0).strip().lower())
-                else: raise Exception('ERROR: Invalid syntax.')
+                else: raise Exception('[ERROR]: Invalid command')
         # print(primary_key)
         foreign_key=[]
         if table_info:
@@ -112,7 +112,7 @@ def create(action):
                                 break
                             else:
                                 foreign_key.append(table_info.pop(0).strip().lower())
-                else: raise Exception('ERROR: Invalid syntax.')
+                else: raise Exception('[ERROR]: Invalid command.')
 
         ref_table=[]
         ref_column=[]
@@ -166,7 +166,7 @@ def create(action):
         attrs_ls=[]
         for i in range(len(attrs)):
             if _type[i] not in std_type:
-                raise Exception('ERROR: Invalid type.')
+                raise Exception('[ERROR]: Invalid type.')
             attrs_ls.append({
                     'name':attrs[i],
                     'type': _type[i],
@@ -197,7 +197,7 @@ def create(action):
         }
 
     else:
-        raise Exception('Syntax error! Recommend : create table/database ')
+        raise Exception('[ERROR]: Invalid command. Help: create table/database X')
 
 def drop(action):
     if action[1].upper() == 'DATABASE':
@@ -219,15 +219,9 @@ def drop(action):
         
 def insert(action):
     if action[1].upper() == 'INTO':
-        """
-        TODO:
-        Put new insert parser there and fit into attr:list and data:list below.
-        """
         attrs = []
         data = []
 
-        '''
-        '''
         action.pop(0) # Pop Insert
         action.pop(0) # Pop INTO
         table_name=action.pop(0).lower()    #Pop table name
@@ -241,14 +235,14 @@ def insert(action):
                         try:
                             value=float(value)
                         except:
-                            raise Exception('ERROR 1: Invalid symtax')
+                            raise Exception('[ERROR]: Invalid command')
                     elif "'" in value:
                         value=value.strip("()' ")
                     else:
                         try:
                             value=int(value)
                         except:
-                            raise Exception('ERROR 2: Invalid symtax')
+                            raise Exception('[ERROR]: Invalid command')
 
                     data.append(value)
                     if ')' in elem:
@@ -260,8 +254,8 @@ def insert(action):
                         }
 
             else:
-                raise Exception('ERROR 3: Invalid syntax')
-            raise Exception('ERROR 4: Invalid syntax')
+                raise Exception('[ERROR]: Invalid command')
+            raise Exception('[ERROR]: Invalid command')
         else:   # attrs and data
 
             # Get attrs
@@ -277,16 +271,16 @@ def insert(action):
                 for _ in range(count):
                     action.pop(0)
                 if action==[]: 
-                    raise Exception('ERROR 5: No data')
+                    raise Exception('[ERROR]: No data')
                 # print(attrs)
                 if len(attrs)!=len(set(attrs)): 
-                    raise Exception('ERROR 6: Duplicated attributes')
+                    raise Exception('[ERROR]: Duplicated attributes')
                 if action[0].upper()!='VALUES':
-                    raise Exception('ERROR 7: Invalid syntax')
+                    raise Exception('[ERROR]: Invalid command')
                 action.pop(0)
 
             else:
-                raise Exception('ERROR 8: Invalid syntax')
+                raise Exception('[ERROR]: Invalid command')
 
             if '(' in action[0]:
                 for value in action:
@@ -296,7 +290,7 @@ def insert(action):
                         try:
                             value=float(value)
                         except:
-                            raise Exception('ERROR 9: Invalid symtax')
+                            raise Exception('[ERROR]: Invalid command')
                     elif "'" in value:
                         value=value.strip("()' ,")
                     else:
@@ -304,13 +298,13 @@ def insert(action):
                             value=int(value)
                         except:
                             print(value)
-                            raise Exception('ERROR 10: Invalid symtax')
+                            raise Exception('[ERROR]: Invalid command')
 
 
                     if ')' in elem:
                         data.append(value)
                         if len(attrs)!=len(data):
-                            raise Exception('ERROR 11: Data length is not correponding to attributes.')
+                            raise Exception('[ERROR]: Data length is not correponding to attributes.')
 
                         return{
                             'query_keyword' : 'insert',
@@ -319,13 +313,13 @@ def insert(action):
                             'data' : data
                         }
                     data.append(value)
-                raise Exception('ERROR 12: Invalid syntax')
+                raise Exception('[ERROR]: Invalid command')
                 
             else:
-                raise Exception('ERROR 13: Invalid syntax')
+                raise Exception('[ERROR]: Invalid command')
 
     else:
-        raise Exception('Syntax error! Recommend : insert into ')
+        raise Exception('[ERROR]: Invalid command. help: insert into ')
 
 def select(action):
     if action[0].upper()=='SELECT':
@@ -357,7 +351,7 @@ def select(action):
             select_tables.append(action.pop(0).lower().strip(', '))
             if action==[]:
                 break
-    else: raise Exception('ERROR: Invalid syntax.')
+    else: raise Exception('[ERROR]: Invalid command.')
     print('tables: ', select_tables)
 
     # Where clause
@@ -385,12 +379,12 @@ def select(action):
         if action[0].upper()=='GROUP':
             action.pop(0)   # Pop group
             # pop BY
-            if action.pop(0).upper()!='BY': raise Exception('ERROR: Invalid syntax.') 
+            if action.pop(0).upper()!='BY': raise Exception('[ERROR]: Invalid command.')
             while action[0].upper() not in key_words:
                 groupBy_clause.append(action.pop(0).strip(', '))
                 if not action:
                     break
-            if groupBy_clause[0].upper()=='HAVING': raise Exception('ERROR: Invalid syntax.')
+            if groupBy_clause[0].upper()=='HAVING': raise Exception('[ERROR]: Invalid command.')
 
             groupBy_expression=parse_groupBy(groupBy_clause, attrs_dict)
     print('GROUP BY CLAUSE: ', groupBy_expression)
@@ -401,7 +395,7 @@ def select(action):
         if action[0].upper()=='ORDER':
             action.pop(0)   # Pop order
             if action.pop(0).upper()!='BY':
-                raise Exception('ERROR: Invalid syntax')
+                raise Exception('[ERROR]: Invalid command')
             while action[0].upper() not in key_words:
                 orderBy_clause.append(action.pop(0).lower().strip(', '))
                 if not action:
@@ -409,7 +403,7 @@ def select(action):
             orderBy_expression=parse_orderBy(orderBy_clause)
     print('ORDER BY CLAUSE: ', orderBy_expression)
     if action!=[]:
-        raise Exception('ERROR: Invalid syntax.')
+        raise Exception('[ERROR]: Invalid command.')
     return {
         'query_keyword': 'select',
         'attrs': attrs_dict,    # dict->{attr: aggregate function, } such as {id: MAX, }
@@ -497,12 +491,12 @@ def reorder_where_clause(where_clause):
                 elif 'BETWEEN' in temp.upper():
                     tmp=temp.split(' ')
                     tmp_attr=tmp.pop(0).lower() #Pop attr
-                    if tmp.pop(0).upper()!='BETWEEN': raise Exception('ERROR: Invalid Where Clause.')   #Pop Between
+                    if tmp.pop(0).upper()!='BETWEEN': raise Exception('[ERROR]: Invalid Where Clause.')   #Pop Between
                     
                     try:
                         if float(tmp[0])>float(tmp[2]):
-                            raise Exception('ERROR: Invalid where clause')
-                    except: raise Exception('ERROR: Invalid where clause')
+                            raise Exception('[ERROR]: Invalid where clause')
+                    except: raise Exception('[ERROR]: Invalid where clause')
 
                     # v1
                     conditions.append({
@@ -512,7 +506,7 @@ def reorder_where_clause(where_clause):
                         'tag': 0 
                     })
 
-                    if tmp.pop(0).upper()!='AND': raise Exception('ERROR: Invalid Where Clause.')   # Pop AND
+                    if tmp.pop(0).upper()!='AND': raise Exception('[ERROR]: Invalid where Clause.')   # Pop AND
                     conditions.append('AND')
                     # v2
                     conditions.append({
@@ -529,12 +523,12 @@ def reorder_where_clause(where_clause):
                 elif 'BETWEEN' in temp.upper():
                     tmp=temp.split(' ')
                     tmp_attr=tmp.pop(0).lower() #Pop attr
-                    if tmp.pop(0).upper()!='BETWEEN': raise Exception('ERROR: Invalid Where Clause.')   #Pop Between
+                    if tmp.pop(0).upper()!='BETWEEN': raise Exception('[ERROR]: Invalid where Clause.')   #Pop Between
                     
                     try:
                         if float(tmp[0])>float(tmp[2]):
-                            raise Exception('ERROR: Invalid where clause')
-                    except: raise Exception('ERROR: Invalid where clause')
+                            raise Exception('[ERROR]: Invalid where clause')
+                    except: raise Exception('[ERROR]: Invalid where clause')
 
                     # v1
                     conditions.append({
@@ -544,7 +538,7 @@ def reorder_where_clause(where_clause):
                         'tag': 0 
                     })
 
-                    if tmp.pop(0).upper()!='AND': raise Exception('ERROR: Invalid Where Clause.')   # Pop AND
+                    if tmp.pop(0).upper()!='AND': raise Exception('[ERROR]: Invalid where Clause.')   # Pop AND
                     conditions.append('AND')
                     # v2
                     conditions.append({
@@ -561,7 +555,7 @@ def reorder_where_clause(where_clause):
                 elif ' IN ' in temp.upper():
                     tmp=temp.split(' ')
                     tmp_attr=tmp.pop(0).lower()    # Pop attr
-                    if tmp.pop(0).upper()!='IN': raise Exception('ERROR: Invalid Where Clause.')  # Pop IN
+                    if tmp.pop(0).upper()!='IN': raise Exception('[ERROR]: Invalid where Clause.')  # Pop IN
                     tmp=','.join(tmp).strip('() ').split(',')
                     count=0
                     for val in tmp:
@@ -582,7 +576,7 @@ def reorder_where_clause(where_clause):
                 elif ' NOT IN ' in temp.upper():
                     tmp=temp.split(' ')
                     tmp_attr=tmp.pop(0).lower()    # Pop attr
-                    if tmp.pop(0).upper()!='IN': raise Exception('ERROR: Invalid Where Clause.')  # Pop IN
+                    if tmp.pop(0).upper()!='IN': raise Exception('[ERROR]: Invalid where Clause.')  # Pop IN
                     tmp=','.join(tmp).strip('() ').split(',')
                     count=0
                     for val in tmp:
@@ -600,12 +594,12 @@ def reorder_where_clause(where_clause):
                         while op:
                             conditions.append(op.pop(0))
                     continue
-                else: raise Exception('ERROR: Invalid where clause')
+                else: raise Exception('[ERROR]: Invalid where clause')
                 conditions.append(condition)
                 if op:
                     while op:
                         conditions.append(op.pop(0))
-            # else: raise Exception('ERROR: Invalid where clause')
+            # else: raise Exception('[ERROR]: Invalid where clause')
             temp=[]
         else:
             temp.append(where_clause[i])
@@ -626,13 +620,13 @@ def parse_attrs(attrs):
             # temp 1 is attr
             agg_word=temp[0].strip('() ,').upper()
             attr_tmp=temp[1].strip('() ,').lower()
-            if agg_word not in key_words: raise Exception('ERROR: Invalid syntax.')
+            if agg_word not in key_words: raise Exception('[ERROR]: Invalid command.')
 
             parse_attrs[attr_tmp]=agg_word
             
         elif '(' not in attr and ')' not in attr:
             parse_attrs[attr]='NORMAL'
-        else: raise Exception('ERROR: Invalid syntax.')
+        else: raise Exception('[ERROR]: Invalid command.')
     return parse_attrs
 
 def parse_groupBy(groupBy_clause, attrs):
@@ -650,16 +644,16 @@ def parse_groupBy(groupBy_clause, attrs):
 
     if len(groupBy)==len(attrs):
         if set(groupBy)!=set(attrs.keys()):
-            raise Exception('ERROR 1: Invalid group by clause.')
+            raise Exception('[ERROR]: Invalid group by clause.')
         if len(set(attrs.values()))!=1:
-            raise Exception('ERROR 2: Group by attrs cannot have aggregate function')
+            raise Exception('[ERROR]: Group by attrs cannot have aggregate function')
         if 'NORMAL' not in list(attrs.values()):
-            raise Exception('ERROR 3: Group by attrs cannot have aggregate function')
+            raise Exception('[ERROR]: Group by attrs cannot have aggregate function')
     else:
         for elem in groupBy:
             del att[elem]
         if 'NORMAL' in list(att.values()):
-            raise Exception('ERROR 4: Invalid group by clause')
+            raise Exception('[ERROR]: Invalid group by clause')
 
 
     conditions=reorder_where_clause(having)
@@ -737,7 +731,7 @@ def use(action):
 
 def show(action):
     if len(action) != 2:
-        raise Exception('Syntax error! Recommend : show databases/tables ')
+        raise Exception('[ERROR] Invalid command. help: show databases/tables ')
     if action[1] == 'databases':
         return{
             'query_keyword' : 'show',
@@ -749,20 +743,20 @@ def show(action):
             'type' :'table'
         }
     else:
-        raise Exception('Syntax error! Recommend : show databases/tables ')
+        raise Exception('[ERROR] Invalid command. help: show databases/tables ')
 
 def update(action):
     
     if action[0].upper()=='UPDATE':
         action.pop()
     table_name=action.pop()
-    if action.pop().upper()!='SET': raise Exception('ERROR 1: Not SET syntax.')
+    if action.pop().upper()!='SET': raise Exception('[ERROR]: Invalid command.')
 
     set_dict=[]
     while action[0].upper()!='WHERE':
         condition=action.pop().strip(', ')
         if '=' not in condition:
-            raise Exception('ERROR 2: Invalid syntax.')
+            raise Exception('[ERROR]: Invalid command.')
         tmp=condition.split('=')
         set_dict.append({
             'attr': tmp[0].lower(),
@@ -774,7 +768,7 @@ def update(action):
     where_expression=[]
     if action:
         if action[0].upper()!='WHERE':
-            raise Exception('ERROR 3: Invalid syntax.')
+            raise Exception('[ERROR]: Invalid command.')
         action.pop()    #Pop where
         conditions=reorder_where_clause(action)
 
@@ -790,13 +784,13 @@ def delete(action):
     if action[0].upper()=='DELETE':
         action.pop()
     if action.pop(0).upper()!='FROM':
-        raise Exception('ERROR 1: Invalid syntax.')
+        raise Exception('[ERROR]: Invalid command.')
     table_name=action.pop(0).lower()
 
     where_expression=[]
     if action:
         if action.pop(0).upper()!='WHERE':
-            raise Exception('ERROR 2: Invalid syntax')
+            raise Exception('[ERROR]: Invalid command.')
         conditions=reorder_where_clause(action)
 
         # where clause poland expression
@@ -810,16 +804,16 @@ def create_index(action):
     if action[0].upper()=='CREATE':
         action.pop(0)
     if action.pop(0).upper()!='INDEX':
-        raise Exception('ERROR 1: Invalid syntax.')
+        raise Exception('[ERROR]: Invalid command.')
 
     idex_name=action.pop(0)
 
     if action.pop(0).upper()!='ON':
-        raise Exception('ERROR 2: Invalid syntax.')
+        raise Exception('[ERROR]: Invalid command.')
     table_name=action.pop(0)
 
     if '(' not in action[0] or ')' not in action[-1]:
-        raise Exception('ERROR 3: Invalid syntax.')
+        raise Exception('[ERROR]: Invalid command.')
     _str=' '.join(action).strip('() ')
     attrs=_str.split(',')
     attrs=list(map(str.strip, attrs))
@@ -836,16 +830,16 @@ def drop_index(action):
         action.pop(0)
 
     if action.pop(0).upper()!='INDEX':
-        raise Exception('ERROR 1: Invalid syntax.')
+        raise Exception('[ERROR]: Invalid command.')
     idex_name=action.pop(0)
 
     if action.pop(0).upper()!='ON':
-        raise Exception('ERROR 2: Invalid syntax.')
+        raise Exception('[ERROR]: Invalid command.')
 
     table_name=action.pop(0)
 
     if action:
-        raise Exception('ERROR 3: Invalid syntax.')
+        raise Exception('[ERROR]: Invalid command.')
 
     return {
         'query_keyword': 'drop',
@@ -894,13 +888,4 @@ def startParse(commandline):
     return act
 
 # TEST
-# print(startParse("select * from table A where id=5;"))
-
-# TEST RESULT
-# distinct:  0
-# attrs:  {'*': 'NORMAL'}
-# tables:  ['table', 'a']
-# where clause:  [{'attr': 'id', 'value': '5;', 'operation': '=', 'tag': 1}]
-# GROUP BY CLAUSE:  {}
-# ORDER BY CLAUSE:  {}
-# {'query_keyword': 'select', 'attrs': {'*': 'NORMAL'}, 'tables': ['table', 'a'], 'where': [{'attr': 'id', 'value': '5;', 'operation': '=', 'tag': 1}], 'groupby': {}, 'orderby': {}}
+# print(startParse("select * from table test0 where a=5;"))
