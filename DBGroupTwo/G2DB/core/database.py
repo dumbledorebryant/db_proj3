@@ -26,13 +26,13 @@ class Database():
         # If the database directory is exist, pass
         if not os.path.exists(_database):
             os.makedirs(_database)
-
+        # exit()
         # If the database is exist, rewrite
         if os.path.exists(_database + database):
             file = open(_database + database, "wb+")
             pickle.dump(self, file)
             file.close()
-            print('[SUCCESS]: Save successfully.' % database)
+            print('[SUCCESS]: Save database %s successfully.' % database)
             return
 
         # If the database is not exist, create and PASS
@@ -40,11 +40,12 @@ class Database():
             file = open(_database + database, "wb+")
             pickle.dump(self, file)
             file.close()
-            print('[SUCCESS]: Create Database %s successfully.' % database)
+            print('[SUCCESS]: Save database %s successfully.' % database)
             return
 
         else:
             raise Exception('[ERROR]: Invalid command.')
+
 
     def drop_database(self):
         database = self.name.replace(';', '').lower()
