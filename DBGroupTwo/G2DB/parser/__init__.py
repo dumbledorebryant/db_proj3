@@ -347,6 +347,9 @@ select
 
 """
 def select(action):
+
+    key_words = ['FROM', 'WHERE', 'ORDER', 'GROUP', 'BY', 'INNER','ON','FULL','OUTER','LEFT','JOIN']
+
     # pop: 'SELECT'
     if action[0].upper()=='SELECT':
         action.pop(0)
@@ -356,8 +359,6 @@ def select(action):
     if action[0].upper()=='DISTINCT':
         distinct_key=1
         action.pop(0)
-
-    key_words=['FROM', 'WHERE', 'ORDER', 'GROUP', 'BY','INNER']
 
     ####################
     # get * or colName
@@ -377,8 +378,11 @@ def select(action):
     tableNames_list=[]
     # print(action)
     if action.pop(0).upper()=='FROM':
+        # go out when next token is in keywords or has no next token.
         while action[0].upper() not in key_words:
             tableNames_list.append(action.pop(0).lower().strip(', '))
+            if not action:
+                break
             if action==[]:
                 break
     else: raise Exception('[ERROR]: need from')
@@ -386,26 +390,111 @@ def select(action):
     ######################################################################################
     # Join
     # SELECT * FROM b INNER JOIN A on b.name=A.name
-    # join_expression, joinTableName
+    # join_expression,joinTableNames,join_expression
+    # join_type=-1 no use
+    # join_type=0 inner join
+    # join_type=1 full outer join
+    # join_type=2 left outer join
     ######################################################################################
+    join_type=-1
+    join_expression = dict()
+    # TODO INNER JOIN
     # inner join
     join_clause = []
+    joinTableNames=[]
     if action:
-        if action.pop(0).upper() == 'INNER':
+        if action[0].upper() == 'INNER':
+            action.pop(0)
             if action.pop(0).upper() == 'JOIN':
                 # TODO get tabe name---> joinTableName
-                # TODO: must need on?
+                while action[0].upper() not in key_words:
+                    joinTableNames.append(action.pop(0).lower().strip(', '))
+                    if not action:
+                        break
+                    if action == []:
+                        break
+                # TODO: must have on --->join_expression
+                # get join condition
                 if action.pop(0).upper() == 'ON':
-                    while action[0].upper():
+                    while action[0].upper() not in key_words:
                         join_clause.append(action.pop(0).strip(', '))
+                        if not action:
+                            break
                     # TODO: get executable condition 两个函数可能要改
                     conditions = reorder_where_clause(join_clause)
                     join_expression = parse_conditions(conditions)
+                    # update join type
+                    join_type = 0
+                else:raise Exception('[ERROR]: Missing ON in command')
+            else: raise Exception('[ERROR]: INNER JOIN help: SELECT *FROM b INNER JOIN A on b.name=A.name')
 
-            else: raise Exception('[ERROR]: maybe you want INNER JOIN')
+        # TODO full outer JOIN
+        join_clause = []
+        joinTableNames = []
+        if action:
+            if action[0].upper() == 'FULL':
+                action.pop(0)
+                if action.pop(0).upper() == 'OUTER':
+                    if action.pop(0).upper() == 'JOIN':
+                        # TODO get tabe name---> joinTableName
+                        while action[0].upper() not in key_words:
+                            joinTableNames.append(action.pop(0).lower().strip(', '))
+                            if not action:
+                                break
+                            if action == []:
+                                break
+                        # TODO: must have on --->join_expression
+                        # get join condition
+                        if action.pop(0).upper() == 'ON':
+                            while action[0].upper() not in key_words:
+                                join_clause.append(action.pop(0).strip(', '))
+                                if not action:
+                                    break
+                            # TODO: get executable condition 两个函数可能要改
+                            conditions = reorder_where_clause(join_clause)
+                            join_expression = parse_conditions(conditions)
+                            # update join type
+                            join_type = 1
+                    else:
+                        raise Exception('[ERROR]: help: SELECT * FROM b Left outer join A on b.name=A.name')
+                else:
+                    raise Exception('[ERROR]: LEFT OUTER JOIN help: SELECT * FROM b Left outer join A on b.name=A.name')
+
+        # TODO Left outer JOIN
+        join_clause = []
+        joinTableNames = []
+        if action:
+            if action[0].upper() == 'LEFT':
+                action.pop(0)
+                if action.pop(0).upper() == 'OUTER':
+                    if action.pop(0).upper() == 'JOIN':
+                        # TODO get table name---> joinTableName
+                        while action[0].upper() not in key_words:
+                            joinTableNames.append(action.pop(0).lower().strip(', '))
+                            if not action:
+                                break
+                            if action == []:
+                                break
+                        # TODO: must have on --->join_expression
+                        # get join condition
+                        if action.pop(0).upper() == 'ON':
+                            while action[0].upper() not in key_words:
+                                join_clause.append(action.pop(0).strip(', '))
+                                if not action:
+                                    break
+                            # TODO: get executable condition 两个函数可能要改
+                            conditions = reorder_where_clause(join_clause)
+                            join_expression = parse_conditions(conditions)
+                            # update join type
+                            join_type = 2
+                    else:
+                        raise Exception('[ERROR]: help: SELECT * FROM b Left outer join A on b.name=A.name')
+                else:
+                    raise Exception('[ERROR]: LEFT OUTER JOIN help: SELECT * FROM b Left outer join A on b.name=A.name')
 
     ####################
     # Where clause
+    # "select * from table A where id=5;"
     ####################
     where_clause=[]
     where_expression=dict()
@@ -463,14 +552,17 @@ def select(action):
         'where': where_expression,  # list->[{attr: , value: , operation: , tag:}, op, ] Poland expression
         # dict->{group_by: [attrs], conditions: [Poland expression like where_clause]}
         'groupby': groupBy_expression,  
-        'orderby': orderBy_expression   # dict->{order_by: [attrs], order: DESC/ASC/NO_ACTION}
-        #TODO add join_expression, joinTableName
+        'orderby': orderBy_expression,   # dict->{order_by: [attrs], order: DESC/ASC/NO_ACTION}
+        'join_condition':join_expression,
+        'joinTableNames':joinTableNames,
+        'joinType':join_type
     }
 
 def reorder_where_clause(where_clause):
     conditions=[]
     temp=[]
     op=[]
+    # print(where_clause)
     for i in range(len(where_clause)):      
         condition=dict()
         if (where_clause[i].upper() in ['OR', 'AND', '(', ')'] and where_clause[i-2].upper()!='BETWEEN') or i==len(where_clause)-1:
@@ -485,7 +577,6 @@ def reorder_where_clause(where_clause):
                 tag=0
                 temp=' '.join(temp)
                 if '<=' in temp:
-
                     tmp=temp.split('<=')
                     try:
                         value=float(tmp[1])
@@ -943,6 +1034,7 @@ def startParse(commandline):
 
 # TEST
 # print(startParse("select * from table A where id=5;"))
+# print(startParse("SELECT * FROM b full outer JOIN A on b.name=A.name;"))
 # print(startParse("create index blackdog on test0 (a)"))
 # TEST RESULT
 # distinct:  0
