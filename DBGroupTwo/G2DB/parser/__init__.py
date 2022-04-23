@@ -429,8 +429,6 @@ def select(action):
             else: raise Exception('[ERROR]: INNER JOIN help: SELECT *FROM b INNER JOIN A on b.name=A.name')
 
         # TODO full outer JOIN
-        join_clause = []
-        joinTableNames = []
         if action:
             if action[0].upper() == 'FULL':
                 action.pop(0)
@@ -461,8 +459,6 @@ def select(action):
                     raise Exception('[ERROR]: LEFT OUTER JOIN help: SELECT * FROM b Left outer join A on b.name=A.name')
 
         # TODO Left outer JOIN
-        join_clause = []
-        joinTableNames = []
         if action:
             if action[0].upper() == 'LEFT':
                 action.pop(0)
@@ -1034,7 +1030,8 @@ def startParse(commandline):
 
 # TEST
 # print(startParse("select * from table A where id=5;"))
-# print(startParse("SELECT * FROM b full outer JOIN A on b.name=A.name;"))
+# print(startParse("SELECT * FROM b full outer JOIN A on b.name=A.name where b.id=5;"))
+# print(startParse("SELECT * FROM b inner JOIN A on b.name=A.name where b.id=5;"))
 # print(startParse("create index blackdog on test0 (a)"))
 # TEST RESULT
 # distinct:  0
