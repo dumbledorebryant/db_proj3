@@ -11,6 +11,7 @@ from G2DB.parser import startParse
 from G2DB.core.database import Database
 from G2DB.core.table import Table
 
+
 # All attributes, table names, and database names will be stored in lower case
 
 # database engine
@@ -20,7 +21,7 @@ class Engine:
     # CREATE DATABASE test;
     def createDatabase(self, name):
         db = Database(name)
-        print ('[SUCCESS]: Create Database %s successfully. You also need to save it.' %name)
+        print('[SUCCESS]: Create Database %s successfully. You also need to save it.' % name)
         return db
 
     # save database test;
@@ -37,13 +38,13 @@ class Engine:
         sysPath = sysPath[:-11] + 'database/'
 
         if not os.path.exists(sysPath + dbname):
-            raise Exception('[ERROR]: No Database called %s.' %dbname)
+            raise Exception('[ERROR]: No Database called %s.' % dbname)
 
         elif os.path.exists(sysPath + dbname):
             file = open(sysPath + dbname, "rb")
             db = pickle.load(file)
             file.close()
-            print('[SUCCESS]: Open Database %s successfully!' %dbname)
+            print('[SUCCESS]: Open Database %s successfully!' % dbname)
 
         else:
             raise Exception('[ERROR]: Invalid command.')
@@ -51,7 +52,7 @@ class Engine:
 
     # show databases;
     def show_database(self):
-        t = sys.argv[0]      
+        t = sys.argv[0]
         t = t[:-11] + 'database/'
         dirs = os.listdir(t)
         for dir in dirs:
@@ -67,22 +68,22 @@ class Engine:
     CREATE TABLE table_name (column_name1 data_type not_null, column_name2 data_type null) primary_key (column_name1, column_name2) foreign_key (column_name_f, column_namef1) references database_name.table_name (column_name);
     CREATE TABLE table_name (column_name1 data_type not_null unique, column_name2 data_type null) primary_key (column_name1, column_name2) foreign_key (column_name_f, column_namef1) references database_name.table_name (column_name);
     """
+
     def createTable(self, db, attrs, info):
         db.add_table(attrs, info)
-        print('[SUCCESS]: Create Table %s successfully!' %info['name'])
+        print('[SUCCESS]: Create Table %s successfully!' % info['name'])
         return db
 
     # DROP TABLE a;
     def dropTable(self, db, table_name):
         db.drop_table(table_name)
 
-
     # insert into perSON (id, position, name, address) values (2, 'eater', 'Yijing', 'homeless')
     def insertTable(self, db, table_name, attrs, data):
         db.tables[table_name].insert(attrs, data)
-        print (db.tables[table_name].datalist)
+        print(db.tables[table_name].datalist)
         return db
-        
+
     def selectQuery(self, db, attrs, tables, where):
         # Return restable
         """
@@ -94,62 +95,65 @@ class Engine:
             cond = {}
         restable = self.subselect(table, ats, cond)
         return restable
-        """        
-        ta={}
+        """
+        table_col_dic = {}
         attrs = list(attrs.keys())
 
         if attrs != ["*"]:
+            # table_col_dic----> {'tableName': ['colName','colName'...]}
             for table_name in tables:
-                att_ls=[]
+                colNameList = []
                 for attr in attrs:
                     if attr in db.tables[table_name].attrls:
-                        att_ls.append(attr)
+                        colNameList.append(attr)
 
-                ta[table_name]=att_ls
+                table_col_dic[table_name] = colNameList
 
         else:
+            # table_col_dic----> {'tableName': ['*']}
             for table_name in tables:
-                ta[table_name] = ['*']
+                table_col_dic[table_name] = ['*']
 
-        print ("ta")
-        print(ta)
-
-        tc=[]
-        used_attrs=[]
-        join_con=[]
+        tc = []
+        used_attrs = []
+        join_con = []
+        # where-->{'attr': 'a', 'value': 5.0, 'operation': '>=', 'tag': 0}
+        # print('==', where)
         for item in where:
-            if item['tag']==1:
+            # print(item['tag'])
+            if item['tag'] == 1:
+
                 join_con.append(item)
                 where.remove(item)
-        print(where)
 
         tbl = tables[::]
 
-        print ("join_con")
-        print(join_con)
+        # print ("join_con")
+        # print(join_con)
         if join_con:
-            condition=join_con.pop(0)
-            print ("condition")
-            print(condition)
+            condition = join_con.pop(0)
+            # print ("condition")
+            # print(condition)
 
             print(db.tables[table_name])
             print(db.tables[table_name].attrls)
+            exit()
             # Get first three elems 
             for table_name in tables:
                 if condition['attr'] in db.tables[table_name].attrls:
                     tc.append(table_name)
                     tbl.remove(table_name)
-                    used_attrs=used_attrs+db.tables[table_name].attrls
-                    if (condition['attr'] not in ta[table_name]) & (ta[table_name]!=['*']):
-                        ta[table_name].append(condition['attr'])
+                    used_attrs = used_attrs + db.tables[table_name].attrls
+                    if (condition['attr'] not in table_col_dic[table_name]) & (table_col_dic[table_name] != ['*']):
+                        table_col_dic[table_name].append(condition['attr'])
 
             for table_name in tables:
                 if condition['value'] in db.tables[table_name].attrls:
                     tc.append(table_name)
                     tbl.remove(table_name)
-                    used_attrs=used_attrs+db.tables[table_name].attrls
-                    if (condition['attr'] not in ta[table_name]) & (ta[table_name]!=['*']):
-                        ta[table_name].append(condition['value'])
+                    used_attrs = used_attrs + db.tables[table_name].attrls
+                    if (condition['attr'] not in table_col_dic[table_name]) & (table_col_dic[table_name] != ['*']):
+                        table_col_dic[table_name].append(condition['value'])
                     tc.append(condition)
 
         # Append one table and one condition by order
@@ -160,30 +164,31 @@ class Engine:
                         if condition['value'] in db.tables[table_name]:
                             tc.append(table_name)
                             tbl.remove(table_name)
-                            used_attrs=used_attrs+db.tables[table_name].attrls
+                            used_attrs = used_attrs + db.tables[table_name].attrls
                             tc.append(condition)
                             join_con.remove(condition)
-                            if (condition['attr'] not in ta[table_name]) & (ta[table_name]!=['*']):
-                                ta[table_name].append(condition['value'])
+                            if (condition['attr'] not in table_col_dic[table_name]) & (
+                                    table_col_dic[table_name] != ['*']):
+                                table_col_dic[table_name].append(condition['value'])
                     continue
                 elif condition['value'] in used_attrs:
                     for table_name in tables:
                         if condition['attr'] in db.tables[table_name]:
                             tc.append(table_name)
                             tbl.remove(table_name)
-                            used_attrs=used_attrs+db.tables[table_name].attrls
+                            used_attrs = used_attrs + db.tables[table_name].attrls
                             tc.append(condition)
                             join_con.remove(condition)
-                            if (condition['attr'] not in ta[table_name]) & (ta[table_name]!=['*']):
-                                ta[table_name].append(condition['attr'])
+                            if (condition['attr'] not in table_col_dic[table_name]) & (
+                                    table_col_dic[table_name] != ['*']):
+                                table_col_dic[table_name].append(condition['attr'])
                     continue
 
                 else:
                     raise Exception('[ERROR]: Wrong command.')
 
-
         while tbl:
-            if len(tc) > 3 :
+            if len(tc) > 3:
                 tc.append(tbl[0])
                 tc.append({})
                 tbl.pop(0)
@@ -196,11 +201,10 @@ class Engine:
             else:
                 tbl.pop(0)
 
-        
         vc = where
 
-        print( {
-            'ta': ta,
+        print({
+            'ta': table_col_dic,
             'tc': tc,
             'vc': where,
 
@@ -209,8 +213,8 @@ class Engine:
         if tc:
 
             to = {}
-            for tname in ta.keys():
-                to[tname] = self.subselect(db.tables[tname], ta[tname], [])
+            for tname in table_col_dic.keys():
+                to[tname] = self.subselect(db.tables[tname], table_col_dic[tname], [])
 
             if tc[2]:
                 jointable = self.join(to[tc[0]], to[tc[1]], [tc[2]['attr'], tc[2]['value']])
@@ -232,15 +236,13 @@ class Engine:
         elif len(tables) == 1:
             table = db.tables[tables[0]]
 
-
         if vc:
-            cond = {'tag': vc[0]['tag'], 'sym': vc[0]['operation'], 'condition': [vc[0]['attr'],  vc[0]['value']]}
+            cond = {'tag': vc[0]['tag'], 'sym': vc[0]['operation'], 'condition': [vc[0]['attr'], vc[0]['value']]}
         else:
-            cond = {} 
+            cond = {}
 
         restable = self.subselect(table, attrs, cond)
         return restable
-        
 
     def subselect(self, table, attrs, where):
         sym = ''
@@ -264,6 +266,7 @@ class Engine:
         if ao == "0":
             df = Database('jointempdb').df_(table1, table2, attr)
         return df
+
     def delete(self, db, name, where):
         db.tables[name].delete(name, where)
         return db
@@ -280,14 +283,14 @@ class Engine:
     def dropIndex(self, db, table, iname):
         db = db.tables[table].drop_index(iname)
         return db
-        
+
     # lauch function: receieve a command and send to execution function.
     def start(self):
         db = None
         # continue running until recieve the exit command.
         while True:
             inputstr = 'GroupTwo>'
-            if db :
+            if db:
                 inputstr = db.name + '> '
             else:
                 inputstr = 'GroupTwo> '
@@ -295,60 +298,62 @@ class Engine:
             ########################
             # Load Test Data
             ########################
-            if commandline=='load demo data':
+            if commandline == 'load demo data':
                 demoQuery = 'create database demo;\n'
                 testNum = 0
-                while testNum<5:
+                while testNum < 5:
                     # define data range
                     dataRange = 1000
-                    if testNum==2:
-                        dataRange=10000
-                    elif testNum==4:
-                        dataRange=100000
+                    if testNum == 2:
+                        dataRange = 10000
+                    elif testNum == 4:
+                        dataRange = 100000
 
                     # Rel-i-i-dataRange
-                    tableName='test'+str(testNum)
-                    col1name='a'
-                    col2name='b'
-                    demoQuery+='create table '+tableName+' ('+col1name+' int not_null unique, '+col2name+' int unique) primary key ('+col1name+');\n'
-                    for i in range(dataRange+1):
-                        demoQuery+='insert into '+tableName+' ('+col1name+', '+col2name+') values ('+str(i)+', '+str(i)+');\n'
-                    testNum+=1
+                    tableName = 'test' + str(testNum)
+                    col1name = 'a'
+                    col2name = 'b'
+                    demoQuery += 'create table ' + tableName + ' (' + col1name + ' int not_null unique, ' + col2name + ' int unique) primary key (' + col1name + ');\n'
+                    for i in range(dataRange + 1):
+                        demoQuery += 'insert into ' + tableName + ' (' + col1name + ', ' + col2name + ') values (' + str(
+                            i) + ', ' + str(i) + ');\n'
+                    testNum += 1
 
                     # Rel-i-1-dataRange
-                    tableName='test'+str(testNum)
-                    demoQuery+='create table '+tableName+' ('+col1name+' int not_null unique, '+col2name+' int) primary key ('+col1name+');\n'
-                    for i in range(dataRange+1):
-                        demoQuery += 'insert into ' + tableName + ' (' + col1name + ', ' + col2name + ') values ('+str(i)+', 1);\n'
+                    tableName = 'test' + str(testNum)
+                    demoQuery += 'create table ' + tableName + ' (' + col1name + ' int not_null unique, ' + col2name + ' int) primary key (' + col1name + ');\n'
+                    for i in range(dataRange + 1):
+                        demoQuery += 'insert into ' + tableName + ' (' + col1name + ', ' + col2name + ') values (' + str(
+                            i) + ', 1);\n'
                     testNum += 1
-                demoQuery+='save database demo;\n'
+                demoQuery += 'save database demo;\n'
                 # create query over
                 # run demo query
-                commandlines=demoQuery.split(';\n')
+                commandlines = demoQuery.split(';\n')
                 for commandline in commandlines:
                     # ignore enter and ;
-                    if commandline=='':
+                    if commandline == '':
                         continue
-                    commandline=commandline.replace(';', '')
+                    commandline = commandline.replace(';', '')
                     # run query
                     try:
                         result, db = self.execute(commandline, db)
                         if result == 'exit':
-                            print ('[SUCCESS]: Exit successfully! See you next time!')
+                            print('[SUCCESS]: Exit successfully! See you next time!')
                             sys.exit(0)
                             return
                     # print error
                     except Exception as err:
-                        print (err)
+                        print(err)
                 continue
 
             ########################
             # Run input query
             ########################
             # ignore enter and ;
-            if commandline=='':
+            if commandline == '':
                 continue
-            commandline=commandline.replace(';', '')
+            commandline = commandline.replace(';', '')
             # run query
             try:
                 result, db = self.execute(commandline, db)
@@ -357,7 +362,7 @@ class Engine:
                     sys.exit(0)
                     return
             except Exception as err:
-                print (err)
+                print(err)
 
     # execution function: send commandline to parser and get an action as return and execute the mached action function.
     def execute(self, commandline, database):
@@ -375,7 +380,8 @@ class Engine:
                 db = self.createDatabase(action['name'])
             elif action['type'] == 'table':
                 if db:
-                    if action['name'] in db.tables.keys(): raise Exception('[ERROR]: Table %s is exsited.' %action['name'])
+                    if action['name'] in db.tables.keys(): raise Exception(
+                        '[ERROR]: Table %s is exsited.' % action['name'])
                     db = self.createTable(db, action['attrls'], action['info'])
                 else:
                     raise Exception('[ERROR]: No database name in command/ Cannot find database name.')
@@ -427,7 +433,7 @@ class Engine:
 
             if db:
                 restable = self.selectQuery(db, action['attrs'], action['tables'], action['where'])
-                print (restable)
+                print(restable)
                 return 'continue', db
             else:
                 raise Exception('[ERROR]: No database name in command/ Cannot find database name.')
@@ -477,5 +483,3 @@ class Engine:
             else:
                 self.show_table(db)
             return 'continue', db
-
-
