@@ -366,18 +366,18 @@ class Table:
         return pd.merge(df1, df2, on=attr)
 
 
-if __name__ == '__main__':
-    data = []
-    for i in range(100):
-        if i > 50:
-            data.append([i,2])
-        else:
-            data.append([i,1])
-    attr1 = {'name': 'id', 'type': 'INT', 'notnull': False, 'unique': False}
-    attr2 = {'name': 'num', 'type': 'INT', 'notnull': False, 'unique': False}
-    info = {'name': 'test', 'attrs': [attr1, attr2], 'primary': '', 'foreign': []}
-    table = Table(['id', 'num'], info)
-    table.df = pd.DataFrame(data, columns=['id', 'num'])
-    print(table.df)
-    res = table.search('*', '=', False, ['id', 5], False)
-    # print(res)
+# if __name__ == '__main__':
+#     data = []
+#     for i in range(100):
+#         if i > 50:
+#             data.append([i,2])
+#         else:
+#             data.append([i,1])
+#     attr1 = {'name': 'id', 'type': 'INT', 'notnull': False, 'unique': False}
+#     attr2 = {'name': 'num', 'type': 'INT', 'notnull': False, 'unique': False}
+#     info = {'name': 'test', 'attrs': [attr1, attr2], 'primary': '', 'foreign': []}
+#     table = Table(['id', 'num'], info)
+#     table.df = pd.DataFrame(data, columns=['id', 'num'])
+#     print(table.df)
+#     res = table.search('*', '=', False, ['id', 5], False)
+#     # print(res)
