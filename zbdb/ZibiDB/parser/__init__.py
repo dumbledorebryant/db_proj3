@@ -391,7 +391,7 @@ def select(action):
                     break
             if groupBy_clause[0].upper()=='HAVING': raise Exception('ERROR: Invalid syntax.')
 
-            groupBy_expression=parse_groupBy(groupBy_clause, attrs_dict)
+            groupBy_expression = parse_groupBy(groupBy_clause, attrs_dict)
     print('GROUP BY CLAUSE: ', groupBy_expression)
 
     orderBy_clause=[]
@@ -661,12 +661,12 @@ def parse_groupBy(groupBy_clause, attrs):
             raise Exception('ERROR 4: Invalid group by clause')
 
 
-    conditions=reorder_where_clause(having)
-    expression=parse_conditions(conditions)
+    # conditions=reorder_where_clause(having)
+    # expression=parse_conditions(conditions)
 
     return {
-        'group_by': groupBy,
-        'conditions': expression
+        'group_by': groupBy
+        # 'conditions': expression
     }
 
 def parse_orderBy(orderBy_clause):
