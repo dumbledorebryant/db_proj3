@@ -3,6 +3,12 @@ def exit(action):
         'query_keyword' : 'exit'
     }
 
+
+
+"""
+create 
+    action[1]='DATABASE' or 'INDEX' or 'TABLE'
+"""
 def create(action):
     if action[1].upper() == 'DATABASE':
         return{
@@ -12,12 +18,10 @@ def create(action):
         }
 
     elif action[1].upper() == 'INDEX':
-
         return create_index(action)
 
 
     elif action[1].upper() == 'TABLE':
-
         table_info = action[3:]
         table_name = action[2].lower()
 
@@ -199,6 +203,10 @@ def create(action):
     else:
         raise Exception('[ERROR]: Invalid command. Help: create table/database X')
 
+"""
+drop
+    action[1]='DATABASE' or 'INDEX' or 'TABLE'
+"""
 def drop(action):
     if action[1].upper() == 'DATABASE':
         return{
@@ -216,15 +224,24 @@ def drop(action):
             'type' : 'table',
             'table_name' : action[2].lower()
         }
-        
+
+
+"""
+create 
+    action[1]='INTO'
+    pop 2 values: Insert  INTO
+    
+"""
 def insert(action):
     if action[1].upper() == 'INTO':
         attrs = []
         data = []
+        # pop 2 values: Insert  INTO
+        action.pop(0)
+        action.pop(0)
+        # pop :table name  (save in table_name)
+        table_name=action.pop(0).lower()
 
-        action.pop(0) # Pop Insert
-        action.pop(0) # Pop INTO
-        table_name=action.pop(0).lower()    #Pop table name
         if action[0].upper()=='VALUES':    # insert table values ()
             # No attrs, only values
             action.pop(0) #Pop VALUE
@@ -321,40 +338,75 @@ def insert(action):
     else:
         raise Exception('[ERROR]: Invalid command. help: insert into ')
 
+
+"""
+select
+    [SELECT] (DISTINCT)
+    action[1]='INTO'
+    pop 2 values: Insert  INTO
+
+"""
 def select(action):
+    # pop: 'SELECT'
     if action[0].upper()=='SELECT':
         action.pop(0)
 
     # Get distinct
-    _distinct=0
+    distinct_key=0
     if action[0].upper()=='DISTINCT':
-        _distinct=1
+        distinct_key=1
         action.pop(0)
-    # print('distinct: ', _distinct)
-    key_words=['FROM', 'WHERE', 'ORDER', 'GROUP', 'BY']
 
-    # Get attrs, and aggragate function
-    select_attrs=[]
-    # attrs_dict=dict()
+    key_words=['FROM', 'WHERE', 'ORDER', 'GROUP', 'BY','INNER']
+
+    ####################
+    # get * or colName
+    ####################
+    select_tokens=[]
     while action[0].upper() not in key_words:
-        select_attrs.append(action.pop(0).lower().strip(', '))  # attr list
+        # split by , 
+        # save in select_tokens
+        select_tokens.append(action.pop(0).lower().strip(', '))
+    # attrs_dict----->{'colName,colName...': 'NORMAL'}
+    attrs_dict=parse_attrs(select_tokens)
 
-    attrs_dict=parse_attrs(select_attrs)
-    # print('attrs: ', attrs_dict)
-
+    ####################
     # Get table names
+    ####################
     # Table names
-    select_tables=[]
+    tableNames_list=[]
     # print(action)
     if action.pop(0).upper()=='FROM':
         while action[0].upper() not in key_words:
-            select_tables.append(action.pop(0).lower().strip(', '))
+            tableNames_list.append(action.pop(0).lower().strip(', '))
             if action==[]:
                 break
-    else: raise Exception('[ERROR]: Invalid command.')
-    # print('tables: ', select_tables)
+    else: raise Exception('[ERROR]: need from')
 
+    ######################################################################################
+    # Join
+    # SELECT * FROM b INNER JOIN A on b.name=A.name
+    # join_expression, joinTableName
+    ######################################################################################
+    # inner join
+    join_clause = []
+    if action:
+        if action.pop(0).upper() == 'INNER':
+            if action.pop(0).upper() == 'JOIN':
+                # TODO get tabe name---> joinTableName
+                # TODO: must need on?
+                if action.pop(0).upper() == 'ON':
+                    while action[0].upper():
+                        join_clause.append(action.pop(0).strip(', '))
+                    # TODO: get executable condition 两个函数可能要改
+                    conditions = reorder_where_clause(join_clause)
+                    join_expression = parse_conditions(conditions)
+
+            else: raise Exception('[ERROR]: maybe you want INNER JOIN')
+
+    ####################
     # Where clause
+    ####################
     where_clause=[]
     where_expression=dict()
     # conditions=[]
@@ -407,11 +459,12 @@ def select(action):
     return {
         'query_keyword': 'select',
         'attrs': attrs_dict,    # dict->{attr: aggregate function, } such as {id: MAX, }
-        'tables': select_tables,    # list->[table_names]
+        'tables': tableNames_list,    # list->[table_names]
         'where': where_expression,  # list->[{attr: , value: , operation: , tag:}, op, ] Poland expression
         # dict->{group_by: [attrs], conditions: [Poland expression like where_clause]}
         'groupby': groupBy_expression,  
         'orderby': orderBy_expression   # dict->{order_by: [attrs], order: DESC/ASC/NO_ACTION}
+        #TODO add join_expression, joinTableName
     }
 
 def reorder_where_clause(where_clause):
@@ -886,6 +939,7 @@ def startParse(commandline):
     act = query_list[keyword](action)
 
     return act
+
 
 # TEST
 # print(startParse("select * from table A where id=5;"))
