@@ -889,7 +889,7 @@ def startParse(commandline):
 
 # TEST
 # print(startParse("select * from table A where id=5;"))
-print(startParse("create index blackdog on test0 (a)"))
+# print(startParse("create index blackdog on test0 (a)"))
 # TEST RESULT
 # distinct:  0
 # attrs:  {'*': 'NORMAL'}
