@@ -802,7 +802,7 @@ def parse_groupBy(groupBy_clause, attrs):
     att=attrs.copy()
 
     # TODO: Check attr and groupBy attr
-    print(groupBy_clause)
+    # print(groupBy_clause)
     groupBy=[]
     having=[]
     for i in range(len(groupBy_clause)):
@@ -836,7 +836,7 @@ def parse_groupBy(groupBy_clause, attrs):
 def parse_orderBy(orderBy_clause):
     # Input: list, order by clause
     # Output: dict, {order_by: attr, order: desc/asc/no_action}
-    print(orderBy_clause)
+    # print(orderBy_clause)
     key_words=['DESC', 'ASC']
     order_status='NO_ACTION'
     orderBy=[]
