@@ -221,6 +221,7 @@ class Table:
                     del self.data[tuple([value])]
                     self.df=self.df[self.df[where[0]['attr']]!=value]
                 elif where[0]['operation']=='<>':
+                    value = where[0]['value']
                     try:
                         value=int(value)
                     except:
