@@ -1,6 +1,7 @@
 import os
 import sys
 import pickle
+import pandas as pd
 import shutil
 
 import csv
@@ -116,28 +117,22 @@ class Engine:
 
         tc = []
         used_attrs = []
-        join_con = []
-        # where-->{'attr': 'a', 'value': 5.0, 'operation': '>=', 'tag': 0}
-        # print('==', where)
-        for item in where:
-            # print(item['tag'])
-            if item['tag'] == 1:
+        strConditionList = [] # use, when # where condition has str-->''
 
-                join_con.append(item)
+        # where-->{'attr': 'a', 'value': 5.0, 'operation': '>=', 'tag': 0}
+        for item in where:
+            # where condition has str-->''
+            if item['tag'] == 1:
+                strConditionList.append(item)
                 where.remove(item)
 
         tbl = tables[::]
-
-        # print ("join_con")
-        # print(join_con)
-        if join_con:
-            condition = join_con.pop(0)
+        # where condition has str-->''
+        if strConditionList:
+            condition = strConditionList.pop(0)   # per where condition
             # print ("condition")
             # print(condition)
 
-            print(db.tables[table_name])
-            print(db.tables[table_name].attrls)
-            exit()
             # Get first three elems 
             for table_name in tables:
                 if condition['attr'] in db.tables[table_name].attrls:
@@ -157,8 +152,8 @@ class Engine:
                     tc.append(condition)
 
         # Append one table and one condition by order
-        while join_con:
-            for condition in join_con:
+        while strConditionList:
+            for condition in strConditionList:
                 if condition['attr'] in used_attrs:
                     for table_name in tables:
                         if condition['value'] in db.tables[table_name]:
@@ -166,7 +161,7 @@ class Engine:
                             tbl.remove(table_name)
                             used_attrs = used_attrs + db.tables[table_name].attrls
                             tc.append(condition)
-                            join_con.remove(condition)
+                            strConditionList.remove(condition)
                             if (condition['attr'] not in table_col_dic[table_name]) & (
                                     table_col_dic[table_name] != ['*']):
                                 table_col_dic[table_name].append(condition['value'])
@@ -178,7 +173,7 @@ class Engine:
                             tbl.remove(table_name)
                             used_attrs = used_attrs + db.tables[table_name].attrls
                             tc.append(condition)
-                            join_con.remove(condition)
+                            strConditionList.remove(condition)
                             if (condition['attr'] not in table_col_dic[table_name]) & (
                                     table_col_dic[table_name] != ['*']):
                                 table_col_dic[table_name].append(condition['attr'])
@@ -202,7 +197,6 @@ class Engine:
                 tbl.pop(0)
 
         vc = where
-
         print({
             'ta': table_col_dic,
             'tc': tc,
@@ -211,7 +205,6 @@ class Engine:
         })
 
         if tc:
-
             to = {}
             for tname in table_col_dic.keys():
                 to[tname] = self.subselect(db.tables[tname], table_col_dic[tname], [])
@@ -236,12 +229,21 @@ class Engine:
         elif len(tables) == 1:
             table = db.tables[tables[0]]
 
+        # print(table)
+        # print(attrs)
+        # exit()
+        ############
+        # condition
+        ############
         if vc:
             cond = {'tag': vc[0]['tag'], 'sym': vc[0]['operation'], 'condition': [vc[0]['attr'], vc[0]['value']]}
         else:
             cond = {}
 
         restable = self.subselect(table, attrs, cond)
+        # print(attrs)
+        # print(restable)
+        # exit()
         return restable
 
     def subselect(self, table, attrs, where):
@@ -364,6 +366,103 @@ class Engine:
             except Exception as err:
                 print(err)
 
+    # TODO JOIN
+    def joinQuery(self, db, joinType, attrs, tables, joinTableNames, join_condition, where):
+        ###############################
+        # delect target tablename in where condition
+        ###############################
+        table_where='' # where_target
+        if where:
+            where_cnt=len(where)
+            # print(where)
+            i=0
+            while i<where_cnt:
+                each_conditon=where[i]
+                # print(each_conditon)
+                if each_conditon not in ['OR', 'AND', '(', ')']:
+                    if '.' in each_conditon['attr']:
+                        table_where = each_conditon['attr'].split('.')[0]
+                        value=each_conditon['attr'].split('.')[1]
+                        each_conditon['attr']=value
+                    else:raise Exception('[ERROR]: Need a specify table in where condition!')
+                try:
+                    a = int(each_conditon['attr'])
+                    a = int(each_conditon['value'])
+                    each_conditon['tag']=0
+                except:
+                    pass
+                i = i + 1
+
+        ###############################
+        # start join
+        ###############################
+        # selectQuery(db, action['attrs'], action['tables'], action['where'])
+        howType=''
+        if joinType==0:
+            # inner join
+            howType='inner'  # CAN NOT CHANGE!
+        elif joinType==1:
+            howType='outer'
+        elif joinType==2:
+            howType='left'
+        elif joinType==3:   ##############paser!!!!
+            howType='right'
+
+        for item in join_condition:
+            value1=item['attr']
+            value2=item['value']
+            # get table information
+            table1=value1.split('.')[0]
+            col1=value1.split('.')[1]
+            table2 = value2.split('.')[0]
+            col2 = value2.split('.')[1]
+
+            # select * from X where [where]
+            colName = ['*']
+            if table_where == tables[0]:
+                df1 = self.selectQuery(db, {'*': 'NORMAL'}, tables, where)
+                df2 = self.subselect(db.tables[table2], colName, [])
+            elif table_where == table2:
+                df2 = self.selectQuery(db, {'*': 'NORMAL'}, [table2], where)
+                df1 = self.subselect(db.tables[table1], colName, [])
+
+            attList=list(attrs.keys())
+
+            # change columns name
+            for name in df1.columns:
+                # condition key colname won't change
+                if name==col1:
+                    continue
+                new_name=table1+'.'+name
+                df1.rename(columns={name:new_name}, inplace = True)
+            for name in df2.columns:
+                if name==col2:
+                    new_name=col1
+                else:
+                    new_name = table2 + '.' + name
+                df2.rename(columns={name: new_name}, inplace=True)
+
+            # change select colname
+            leng=len(attList)
+            i=0
+            att_collist=[]
+            while i<leng:
+                # print(attList[i])
+                if attList[i]==col1:
+                    att_collist.append(col1)
+                else:
+                    att_collist.append(table1 + '.' + attList[i])
+                    att_collist.append(table2 + '.'+attList[i])
+                i+=1
+
+            df = pd.merge(df1, df2, on=col1, how=howType)
+            df=df[att_collist]
+
+        return df
+
+
+
+
     # execution function: send commandline to parser and get an action as return and execute the mached action function.
     def execute(self, commandline, database):
         # parse the query
@@ -430,9 +529,13 @@ class Engine:
         # SELECT
         ########################
         if action['query_keyword'] == 'select':
-
             if db:
-                restable = self.selectQuery(db, action['attrs'], action['tables'], action['where'])
+                # TODO
+                if action['joinType']!=-1:
+                    restable=self.joinQuery(db,action['joinType'],action['attrs'],action['tables'],action['joinTableNames'],action['join_condition'], action['where'])
+                else:
+                    # no join
+                    restable = self.selectQuery(db, action['attrs'], action['tables'], action['where'])
                 print(restable)
                 return 'continue', db
             else:
