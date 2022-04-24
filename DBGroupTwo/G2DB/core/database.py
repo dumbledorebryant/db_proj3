@@ -87,6 +87,7 @@ class Database():
             df = df1.assign(key=1).merge(df2.assign(key=1), on='key').drop('key', 1)
         return df
 
+
     def df_and(self, df1, df2):
         return pd.concat([df1, df2], axis=1, join='inner')
     def df_or(self, df1, df2):
