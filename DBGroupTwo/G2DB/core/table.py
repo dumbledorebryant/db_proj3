@@ -106,8 +106,6 @@ class Table:
                     # open the table file with index
                     index_name = item[2]
                     if os.path.exists(table + '_' + ''.join(attr) + '_' + index_name + '.npy'):
-                        print('=============')
-                        print(table + '_' + ''.join(attr) + '_' + index_name + '.npy')
                         index_info = np.load(table + '_' + ''.join(attr) + '_' + index_name + '.npy', allow_pickle=True)
                         index_info = index_info.tolist()
                         hashtable = HashTable(7)
@@ -372,13 +370,17 @@ class Table:
             ###################
             # get index
             ##################
-            print(self.name)
-            print(condition[0])
-            print(condition[1])
-            # df=self.exist_index(self.name, condition[0], condition[1])
-
-            print(self.exist_index(self.name, condition[0], condition[1]))
-            exit()
+            # TODO use index
+            gettable=self.exist_index(self.name, condition[0], condition[1])
+            if gettable is not None:
+                # has index
+                templist=[]
+                for item in gettable.values():
+                    templist.append(item)
+                data=pd.DataFrame(templist,columns=self.df.columns)
+                temp=data
+            else:
+                pass
             if tag:
                 if attr == ['*']:
                     return temp.loc[temp[condition[0]] == temp[condition[1]]]
