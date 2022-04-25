@@ -318,9 +318,20 @@ class Table:
                         value=int(value)
                     except:
                         pass
-
+                    # TODO add delete
                     del self.data[tuple([value])]
-                    self.df=self.df[self.df[where[0]['attr']]!=value]
+                    colindex=0
+                    keylist=list(self.attrs.keys())
+                    while where[0]['attr']!=keylist[colindex]:
+                        colindex+=1
+
+                    i=0
+                    for item in self.datalist:
+                        if item[colindex]==value:
+                            break
+                        i+=1
+                    del self.datalist[i]
+                    
                 elif where[0]['operation']=='<>':
                     value = where[0]['value']
                     try:
