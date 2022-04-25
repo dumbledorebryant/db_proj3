@@ -951,7 +951,7 @@ def update(action):
 
 def delete(action):
     if action[0].upper()=='DELETE':
-        action.pop()
+        action.pop(0)
     if action.pop(0).upper()!='FROM':
         raise Exception('[ERROR]: Invalid command.')
     table_name=action.pop(0).lower()
