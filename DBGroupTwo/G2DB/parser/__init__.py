@@ -244,7 +244,8 @@ def insert(action):
 
         if action[0].upper()=='VALUES':    # insert table values ()
             # No attrs, only values
-            action.pop(0) #Pop VALUE
+            # Pop VALUE
+            action.pop(0)
             if '(' in action[0]:
                 for value in action:
                     elem=value
@@ -951,7 +952,7 @@ def update(action):
 
 def delete(action):
     if action[0].upper()=='DELETE':
-        action.pop()
+        action.pop(0)
     if action.pop(0).upper()!='FROM':
         raise Exception('[ERROR]: Invalid command.')
     table_name=action.pop(0).lower()
@@ -965,6 +966,7 @@ def delete(action):
         # where clause poland expression
         where_expression=parse_conditions(conditions)   # Parse where clause
     return{
+        'query_keyword': 'delete',
         'table': table_name,
         'where': where_expression,
     }
@@ -1060,10 +1062,26 @@ def startParse(commandline):
 # TEST
 # action=startParse("SELECT * FROM b inner JOIN A on b.name=A.name where b.id=5;")
 # print(action['where'].type)
+# print(startParse("delete from test1 where a=2"))
+# print(startParse('insert into test4 (a, b) values (100000, 100000)'))
+# print(startParse('insert into test1 (a, b) values (2000, 23)'))
+# 'create table students (id int not_null unique, name char, age int) primary key (id)'
+# print(startParse('insert into students (id, name, age) values (1, \'jack\', 23)'))
+# tableName='a'
+# col1name='colName1'
+# col2name='colName2'
+# i=2
+# demoQuery = 'insert into ' + tableName + ' (' + col1name + ', ' + col2name + ') values (' + str(i) + ', 1);\n'
+# print(demoQuery)
+# print(startParse(demoQuery))
+
+
 # print(startParse("SELECT a,b FROM test0 INNER JOIN test2 on test0.a=test2.a where test0.a>5"))
 # print(startParse("select * from table A where id=5;"))
 # print(startParse("SELECT * FROM b full outer JOIN A on b.name=A.name where b.id=5;"))
 # print(startParse("SELECT * FROM b inner JOIN A on b.name=A.name where b.id=5;"))
+# print(startParse("CREATE TABLE ttest (id int not_null, a float not_null) PRIMARY KEY (id) FOREIGN KEY (id) REFERENCES Persons(id_p)"))
+# print("create table ttest (id int not_null unique, a int unique) primary key (' + col1name + ');")
 # print(startParse("SELECT * FROM test0 INNER JOIN test1 on test0.a=test1.a"))
 # print(startParse("create table test0 (a int not_null unique, b int unique) primary key (a);"))
 

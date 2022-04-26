@@ -2,6 +2,7 @@ import pandas as pd
 import json
 import os
 import numpy as np
+from G2DB.core.hash import HashTable
 from G2DB.core.attribute import Attribute
 from BTrees.OOBTree import OOBTree
 
@@ -28,36 +29,137 @@ class Table:
             if temp.unique:
                 self.uniqueattr[attr['name']] = {}
 
-    def add_index(self, attr, idex_name):
-        if attr[0] not in self.uniqueattr.keys():
-            raise Exception('[ERROR]: The attr is not unique and cannot create index')
-        # If unique:
-        if attr[0] not in self.index:
-            self.index[attr[0]]=idex_name
-        # Get pairs {v1:p1, v2:p2,...}
-        nodes=self.uniqueattr[attr[0]]
+        # TODO: moxiao add_index
 
-        # Create a b tree
-        t=OOBTree()
-        t.update(nodes)
-        self.BTree[idex_name]=t
-        return t
-    
-    def drop_index(self, idex_name):
-        # TABLE is a obj
-        # index name must in index attrs
-        if idex_name in self.index.keys():
-            del self.index[idex_name]
-            del self.BTree[idex_name]
+    def add_index(self, attr, index_name, db, table):
+        # no index on this attr before
+        if not os.path.exists('index_info.npy'):
+            info = []
+            infoarr = np.array(info)
+            np.save('index_info.npy', infoarr)
+        else:
+            # if index_info.npy existed, open it
+            infoarr = np.load('index_info.npy', allow_pickle=True)
+            info = infoarr.tolist()
+            # check if the index was existed, index is the third attribute
+            for item in iter(infoarr):
+                if (item[2] == index_name): raise Exception(
+                    '[ERROR]: Index  is existed.')
+
+        info.append([table, attr, index_name])
+        infoarr = np.array(info)
+        print(info)
+        np.save('index_info.npy', info)
+        # create index
+        dict0 = {}
+        dict1 = {}
+        dict2 = {}
+        dict3 = {}
+        dict4 = {}
+        dict5 = {}
+        dict6 = {}
+        hashlist = [dict0, dict1, dict2, dict3, dict4, dict5, dict6]
+        df = db.tables[table].search(['*'], [], [], [], False)
+        length = df.shape[0]
+        for i in range(length):
+            row = df.iloc[i]
+            value = int(row[attr])
+            # print(value)
+            hashtable = HashTable(7)
+            hash_index = hashtable.hash(value)
+            # print(hash_index)
+            if hash_index == 0:
+                dict0[value] = row
+            if hash_index == 1:
+                dict1[value] = row
+            if hash_index == 2:
+                dict2[value] = row
+            if hash_index == 3:
+                dict3[value] = row
+            if hash_index == 4:
+                dict4[value] = row
+            if hash_index == 5:
+                dict5[value] = row
+            if hash_index == 6:
+                dict6[value] = row
+        # transfer list to array, save as .npy file
+        alist = np.array(hashlist)
+        # print(dict0.keys())
+        # save index as npy.file
+        if os.path.exists(table + '_' + ''.join(attr) + '_' + index_name + '.npy'):
+            raise Exception(
+                '[ERROR]: Index  is existed.')
+        else:
+            np.save(table + '_' + ''.join(attr) + '_' + index_name + '.npy', alist)
+        # load index
+        # a = np.load('a_index.npy', allow_pickle=True)
+        # a = a.tolist()
+        print("Index created successfully")
+
+    def exist_index(self, table, attr, num):
+        if os.path.exists('index_info.npy'):
+            info = np.load('index_info.npy', allow_pickle=True)
+            info = info.tolist()
+            for item in info:
+                # delete the record in index_info.npy
+                if item[0] == table and ''.join(item[1]) == attr:
+                    # open the table file with index
+                    index_name = item[2]
+                    if os.path.exists(table + '_' + ''.join(attr) + '_' + index_name + '.npy'):
+                        index_info = np.load(table + '_' + ''.join(attr) + '_' + index_name + '.npy', allow_pickle=True)
+                        index_info = index_info.tolist()
+                        hashtable = HashTable(7)
+                        hash_num = hashtable.hash(num)
+                        if hash_num == 0:
+                            return index_info[0]
+                        if hash_num == 1:
+                            return index_info[1]
+                        if hash_num == 2:
+                            return index_info[2]
+                        if hash_num == 3:
+                            return index_info[3]
+                        if hash_num == 4:
+                            return index_info[4]
+                        if hash_num == 5:
+                            return index_info[5]
+                        if hash_num == 6:
+                            return index_info[6]
+            return None
+
+    def drop_index(self, index_name, table):
+        # check if index exists
+        if os.path.exists('index_info.npy'):
+            info = np.load('index_info.npy', allow_pickle=True)
+            info = info.tolist()
+            # check if the index was existed, index is the third attribute
+            i = 0
+            for item in info:
+                # delete the record in index_info.npy
+                if (item[2] == index_name):
+                    attr = item[1]
+                    info.remove(item)
+                    i = i + 1
+                    infoarr = np.array(info)
+                    np.save('index_info.npy', infoarr)
+                    # delete the index.npy file
+                    if os.path.exists(table + '_' + ''.join(attr) + '_' + index_name + '.npy'):
+                        print(table + '_' + ''.join(attr) + '_' + index_name + '.npy')
+                        print(info)
+                        os.remove(table + '_' + ''.join(attr) + '_' + index_name + '.npy')
+                    else:
+                        raise Exception('[ERROR]: The index does not exist')
+
         else:
             raise Exception('[ERROR]: The index does not exist')
+
     def index_search(self, attrs, condition):
         '''
         attrs: [attr1, attr2, ...]
         condition:{attr: , value:, operation, }
         '''
         attr=condition['attr']
-        value=condition['value']
+        self.value_ = condition['value']
+        value= self.value_
         operation=condition['operation']
         idex_name=self.index[attr]
         BTree=self.BTree[idex_name]
@@ -211,6 +313,7 @@ class Table:
             if where[0]['attr'] not in self.primary:
                 raise Exception('[ERROR]: You should delete by one of the primary key!')
             else:
+                # TODO !!!!!!!!!!!!!!!!!
                 if where[0]['operation']=='=':
                     value=where[0]['value']
                     try:
@@ -219,7 +322,18 @@ class Table:
                         pass
 
                     del self.data[tuple([value])]
-                    self.df=self.df[self.df[where[0]['attr']]!=value]
+                    colindex=0
+                    keylist=list(self.attrs.keys())
+                    while where[0]['attr']!=keylist[colindex]:
+                        colindex+=1
+
+                    i=0
+                    for item in self.datalist:
+                        if item[colindex]==value:
+                            break
+                        i+=1
+                    del self.datalist[i]
+
                 elif where[0]['operation']=='<>':
                     value = where[0]['value']
                     try:
@@ -230,6 +344,8 @@ class Table:
                     self.df=self.df[self.df[where[0]['attr']]==value]
 
     # res = table.search('*', '=', False, ['id', 5], False)
+    # tag: is str
+    # 'condition': [  where[i]['attr'], where[i]['value']  ]
     def search(self, attr, sym, tag, condition, groupbyFlag):
         # attr: [] or *
         # situation: number means different conditions
@@ -264,12 +380,27 @@ class Table:
                 return temp.loc[:, attr]
 
         if situation == 1:
+            ###################
+            # get index
+            ##################
+            gettable = self.exist_index(self.name, condition[0], condition[1])
+            if gettable is not None:
+                # has index
+                templist = []
+                for item in gettable.values():
+                    templist.append(item)
+                data = pd.DataFrame(templist, columns=self.df.columns)
+                temp = data
+            else:
+                pass
             if tag:
                 if attr == ['*']:
                     return temp.loc[temp[condition[0]] == temp[condition[1]]]
+                #
                 return temp.loc[temp[condition[0]] == temp[condition[1]], attr]
             if attr == ['*']:
                 return temp.loc[temp[condition[0]] == condition[1]]
+            #
             return temp.loc[temp[condition[0]] == condition[1], attr]
         if situation == 2:
             if tag:
