@@ -222,8 +222,9 @@ class Table:
         -Check primary key value, if the value already in prmkvalue, raise error.
         -Print essential information
         """
+
         # TODO: typecheck?
-        prmkvalue = []
+        prmkvalue = [] # primary key
         attvalue = []
         if attrs==[]:
             # TODO: typecheck
@@ -293,7 +294,8 @@ class Table:
                 self.data[tuple(prmkvalue)] = attvalue
             else:
                 raise Exception('[ERROR]: Primary key value collision')
-        
+
+
     def serialize(self):
         pass
     
@@ -322,17 +324,35 @@ class Table:
                         pass
 
                     del self.data[tuple([value])]
+
                     colindex=0
                     keylist=list(self.attrs.keys())
+                    # find which column (get column index)
                     while where[0]['attr']!=keylist[colindex]:
                         colindex+=1
 
+                    # interate whole datalist, find the row the user want to delete
                     i=0
+                    deleteData=[]
                     for item in self.datalist:
                         if item[colindex]==value:
+                            deleteData=item
                             break
                         i+=1
+
                     del self.datalist[i]
+
+                    colNameList=list(self.attrs.keys())
+                    # print(colNameList.keys())
+                    # TODO
+                    # delete unique list
+                    prmkColName=self.primary
+                    for uniqAttName in self.uniqueattr.keys():
+                        index=0 # index of unique colname in whole attrName list
+                        while uniqAttName!=colNameList[index]:
+                            index+=1
+                        uniqValue=deleteData[index]
+                        del self.uniqueattr[uniqAttName][uniqValue]
 
                 elif where[0]['operation']=='<>':
                     value = where[0]['value']

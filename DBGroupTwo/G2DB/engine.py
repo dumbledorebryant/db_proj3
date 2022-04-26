@@ -82,11 +82,10 @@ class Engine:
     # insert into perSON (id, position, name, address) values (2, 'eater', 'Yijing', 'homeless')
     def insertTable(self, db, table_name, attrs, data):
         db.tables[table_name].insert(attrs, data)
-        print(db.tables[table_name].datalist)
+        # print(db.tables[table_name].datalist)
         return db
 
     def selectQuery(self, db, attrs, tables, where):
-
         # Return restable
         """
         ats = list(attrs.keys())
