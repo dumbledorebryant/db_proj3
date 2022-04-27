@@ -491,7 +491,9 @@ class Engine:
             elif table_where == table2:
                 df2 = self.selectQuery(db, {'*': 'NORMAL'}, [table2], where)
                 df1 = self.subselect(db.tables[table1], colName, [])
-
+            elif table_where == '':
+                df1 = self.subselect(db.tables[table1], colName, [])
+                df2 = self.subselect(db.tables[table2], colName, [])
 
             # attList = list(attrs.keys())
 
