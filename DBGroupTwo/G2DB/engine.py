@@ -11,7 +11,6 @@ import pandas
 from G2DB.parser import startParse
 from G2DB.core.database import Database
 from G2DB.core.table import Table
-import pandas as pd
 
 
 # All attributes, table names, and database names will be stored in lower case
@@ -83,50 +82,17 @@ class Engine:
     # insert into perSON (id, position, name, address) values (2, 'eater', 'Yijing', 'homeless')
     def insertTable(self, db, table_name, attrs, data):
         db.tables[table_name].insert(attrs, data)
+        #print(db.tables[table_name].datalist)
         return db
 
-    
-    
 
-
-
-
-    
     def gbQuery(self, db, attrs, tables, groupby):
-        print(attrs)
-        print(groupby)
-        print(tables)
-        print("hahaha\n")
     
         tbl_name = tables[0]
         table = db.tables[tbl_name]
         df_full = table.search(['*'], [], [], [], False)
 
-        relist = []
-        gbcol = groupby['group_by']
-        for attr in attrs.keys():
-            if attrs[attr].upper() == "COUNT":
-                print("COUNT")
-                relist.append(df_full.groupby(gbcol).count())
-            if attrs[attr].upper() == "SUM":
-                print("SUM")
-                relist.append(df_full.groupby(gbcol)[attr].sum())
-            if attrs[attr].upper() == "MAX":
-                print("MAX")
-                relist.append(df_full.groupby(gbcol)[attr].max())
-            if attrs[attr].upper() == "MIN":
-                print("MIN")
-                relist.append(df_full.groupby(gbcol)[attr].min())
-            if attrs[attr].upper() == "AVG":
-                print("AVG")
-                relist.append(df_full.groupby(gbcol)[attr].avg())
-
-        df0 = relist[0]
-        length = len(relist)
-        for i in range(1, length):
-            print(relist[i])
-            df0 = pd.merge(df0, relist[i])
-        
+        gbcol = groupby['group_by']        
         agg_dict = {}
         keys = attrs.keys()
         for attr in keys:
@@ -142,15 +108,13 @@ class Engine:
                 agg_dict[attr].append(attrs[attr].lower())
 
         df_res = df_full.groupby(gbcol).agg(agg_dict)
-
+        
 
         return df_res
 
-            
-
-
 
     def selectQuery(self, db, attrs, tables, where):
+
         # Return restable
         """
         ats = list(attrs.keys())
@@ -327,7 +291,7 @@ class Engine:
         db = db.tables[table].drop_index(iname,table)
         return db
 
-    # lauch function: receieve a command and send to execution function/
+    # lauch function: receieve a command and send to execution function.
     def start(self):
         db = None
         # continue running until recieve the exit command.
@@ -569,20 +533,25 @@ class Engine:
         ########################
         if action['query_keyword'] == 'select':
             if db:
+                # TODO
+                
                 if action['is_group_by'] != -1:
                     restable = self.gbQuery(db, action['attrs'], action['tables'], action['groupby'])
                 elif action['joinType'] != -1:
                     restable = self.joinQuery(db, action['joinType'], action['attrs'], action['tables'],
                                               action['joinTableNames'], action['join_condition'], action['where'])
-                # no join
                 else:
+                    # no join
                     restable = self.selectQuery(db, action['attrs'], action['tables'], action['where'])
-                if action["orderby"]["order_by"] != []:
+                
+                if action["is_order_by"] != -1:
+                    print("begin ordering")
                     if action["orderby"]["order"] == "ASC":
                         restable = restable.sort_values(by=action["orderby"]["order_by"], ascending=True)
                     else:
                         restable = restable.sort_values(by=action["orderby"]["order_by"], ascending=False)
 
+                print("haha begin print")
                 # TODO add if is None
                 if not restable.empty:
                     print(restable)
