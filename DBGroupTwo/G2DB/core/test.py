@@ -12,12 +12,13 @@ list.append(row2)
 # print(row)
 dftest=pd.DataFrame([row],columns=l2)
 dftest=dftest.append(row2)
-print(dftest)
+# print(dftest)
 # print(df.columns.tolist())
 # diction=dict()
 # diction['a']=df
-
-
+a=[1,[1,2],[3,4],4]
+del a[2]
+print(a)
 
 # # iter
 # lista=[1,2,4,5,3,63,1]
