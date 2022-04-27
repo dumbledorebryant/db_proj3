@@ -83,7 +83,6 @@ class Engine:
     # insert into perSON (id, position, name, address) values (2, 'eater', 'Yijing', 'homeless')
     def insertTable(self, db, table_name, attrs, data):
         db.tables[table_name].insert(attrs, data)
-        # print(db.tables[table_name].datalist)
         return db
 
     
@@ -182,95 +181,6 @@ class Engine:
                 table_col_dic[table_name] = ['*']
 
         tc = []
-        used_attrs = []
-        strConditionList = []  # use, when # where condition has str-->''
-        # where--> {'attr': 'b', 'value': "'sw'", 'operation': '=', 'tag': 1},
-        # print(where)
-        for item in where:
-            # TODO add one condition
-            if item not in ['OR', 'AND', '(', ')']:
-                # where condition has str-->''
-                if item['tag'] == 1:
-                    strConditionList.append(item)
-                    where.remmove(item)
-
-        tbl = tables[::]
-
-        # where condition has str-->''
-        if strConditionList:
-            condition = strConditionList.pop(0)  # per where condition
-            # print ("condition")
-            # print(condition)
-            # Get first three elems 
-            for table_name in tables:
-                if condition['attr'] in db.tables[table_name].attrls:
-                    tc.append(table_name)
-                    tbl.remove(table_name)
-                    used_attrs = used_attrs + db.tables[table_name].attrls
-                    if (condition['attr'] not in table_col_dic[table_name]) & (table_col_dic[table_name] != ['*']):
-                        table_col_dic[table_name].append(condition['attr'])
-
-            for table_name in tables:
-                if condition['value'] in db.tables[table_name].attrls:
-                    tc.append(table_name)
-                    tbl.remove(table_name)
-                    used_attrs = used_attrs + db.tables[table_name].attrls
-                    if (condition['attr'] not in table_col_dic[table_name]) & (table_col_dic[table_name] != ['*']):
-                        table_col_dic[table_name].append(condition['value'])
-                    tc.append(condition)
-
-        # Append one table and one condition by order
-        while strConditionList:
-            for condition in strConditionList:
-                if condition['attr'] in used_attrs:
-                    for table_name in tables:
-                        if condition['value'] in db.tables[table_name]:
-                            tc.append(table_name)
-                            tbl.remove(table_name)
-                            used_attrs = used_attrs + db.tables[table_name].attrls
-                            tc.append(condition)
-                            strConditionList.remove(condition)
-                            if (condition['attr'] not in table_col_dic[table_name]) & (
-                                    table_col_dic[table_name] != ['*']):
-                                table_col_dic[table_name].append(condition['value'])
-                    continue
-                elif condition['value'] in used_attrs:
-                    for table_name in tables:
-                        if condition['attr'] in db.tables[table_name]:
-                            tc.append(table_name)
-                            tbl.remove(table_name)
-                            used_attrs = used_attrs + db.tables[table_name].attrls
-                            tc.append(condition)
-                            strConditionList.remove(condition)
-                            if (condition['attr'] not in table_col_dic[table_name]) & (
-                                    table_col_dic[table_name] != ['*']):
-                                table_col_dic[table_name].append(condition['attr'])
-                    continue
-
-                else:
-                    raise Exception('[ERROR]: Wrong command.')
-        while tbl:
-            if len(tc) > 3:
-                tc.append(tbl[0])
-                tc.append({})
-                tbl.pop(0)
-            elif (len(tc) == 0) & (len(tbl) > 1):
-                tc.append(tbl[0])
-                tc.append(tbl[1])
-                tc.append({})
-                tbl.pop(0)
-                tbl.pop(0)
-            else:
-                tbl.pop(0)
-        # TODO delete vc change vc--->where
-        ############################
-        # print({
-        #     'ta': table_col_dic,
-        #     'tc': tc,
-        #     'where': where,
-        # 
-        # })
-
         if tc:
             to = {}
             for tname in table_col_dic.keys():
@@ -354,13 +264,15 @@ class Engine:
                 df2 = dataframe_list.pop()
                 newdf = pd.merge(df1, df2, on=attList, how='outer',sort=False)
                 dataframe_list.append(newdf)
-
-            if len(dataframe_list)==0:
-                print("Empty result! Find no data. Please check the 'WHERE' condition. ")
+            # TODO
+            if len(dataframe_list) == 0:
+                # print("Empty result! Find no data. Please check the 'WHERE' condition. ")
                 restable = None
             else:
-            # only has one dataframe left at this time
-                restable=dataframe_list.pop() # only has one dataframe left at this time
+                # only has one dataframe left at this time
+                restable = dataframe_list.pop()  # only has one dataframe left at this time
+
+
 
         return restable
 
@@ -399,7 +311,12 @@ class Engine:
 
     def update(self, db, name, where, set):
         db = self.delete(db, name, where)
-        db = self.insertTable(db, name, set['attrs'], set['data'])
+        attrlist = []
+        valuelist = []
+        for eachset in set:
+            attrlist.append(eachset['attr'])
+            valuelist.append(eachset['value'])
+        db = self.insertTable(db, name, attrlist, valuelist)
         return db
 
     def createIndex(self, db, table, iname, attr):
@@ -549,7 +466,9 @@ class Engine:
             elif table_where == table2:
                 df2 = self.selectQuery(db, {'*': 'NORMAL'}, [table2], where)
                 df1 = self.subselect(db.tables[table1], colName, [])
-
+            elif table_where == '':
+                df1 = self.subselect(db.tables[table1], colName, [])
+                df2 = self.subselect(db.tables[table2], colName, [])
 
             # attList = list(attrs.keys())
 
@@ -665,8 +584,10 @@ class Engine:
                         restable = restable.sort_values(by=action["orderby"]["order_by"], ascending=False)
 
                 # TODO add if is None
-                if restable is not None:
+                if not restable.empty:
                     print(restable)
+                else:
+                    print("Empty result! Find no data. Please check the 'WHERE' condition. ")
                 return 'continue', db
             else:
                 raise Exception('[ERROR]: No database name in command/ Cannot find database name.')
