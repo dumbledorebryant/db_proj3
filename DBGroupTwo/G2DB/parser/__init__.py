@@ -560,22 +560,21 @@ def select(action):
 
     orderBy_clause=[]
     orderBy_expression=dict()
+    is_order_by = -1
     if action:
         if action[0].upper()=='ORDER':
             action.pop(0)   # Pop order
             if action.pop(0).upper()!='BY':
                 raise Exception('[ERROR]: Invalid command')
+            is_order_by = 1
             while action[0].upper() not in key_words:
                 orderBy_clause.append(action.pop(0).lower().strip(', '))
                 if not action:
                     break
             orderBy_expression=parse_orderBy(orderBy_clause)
     # print('ORDER BY CLAUSE: ', orderBy_expression)
-
-
     if action!=[]:
         raise Exception('[ERROR]: Invalid command.')
-    
     return {
         'query_keyword': 'select',
         'attrs': attrs_dict,    # dict->{attr: aggregate function, } such as {id: MAX, }
@@ -583,7 +582,8 @@ def select(action):
         'where': where_expression,  # list->[{attr: , value: , operation: , tag:}, op, ] Poland expression
         # dict->{group_by: [attrs], conditions: [Poland expression like where_clause]}
         'is_group_by': is_group_by,
-        'groupby': groupBy_expression,  
+        'groupby': groupBy_expression, 
+        'is_order_by': is_order_by, 
         'orderby': orderBy_expression,   # dict->{order_by: [attrs], order: DESC/ASC/NO_ACTION}
         'join_condition':join_expression,
         'joinTableNames':joinTableNames,
@@ -787,8 +787,6 @@ def parse_attrs(attrs):
     # ex. {id: max}
     # print(attrs)
     key_words=['MAX', 'MIN', 'AVG', 'COUNT', 'SUM']
-    print("test attrs")
-    print(attrs)
 
     parse_attrs=dict()
     for attr in attrs:
@@ -811,8 +809,7 @@ def parse_groupBy(groupBy_clause, attrs):
     att=attrs.copy()
 
     # TODO: Check attr and groupBy attr
-    print(groupBy_clause)
-    print(attrs)
+    # print(groupBy_clause)
     groupBy=[]
     having=[]
     for i in range(len(groupBy_clause)):
@@ -821,26 +818,26 @@ def parse_groupBy(groupBy_clause, attrs):
             break
         groupBy.append(groupBy_clause[i])
 
-    # if len(groupBy)==len(attrs):
-        # if set(groupBy)!=set(attrs.keys()):
-            # raise Exception('[ERROR]: Invalid group by clause.')
-        # if len(set(attrs.values()))!=1:
-            # raise Exception('[ERROR]: Group by attrs cannot have aggregate function')
-        # if 'NORMAL' not in list(attrs.values()):
-            # raise Exception('[ERROR]: Group by attrs cannot have aggregate function')
-    # else:
-        # for elem in groupBy:
-            # del att[elem]
-        # if 'NORMAL' in list(att.values()):
-            # raise Exception('[ERROR]: Invalid group by clause')
+    #if len(groupBy)==len(attrs):
+    #    if set(groupBy)!=set(attrs.keys()):
+    #        raise Exception('[ERROR]: Invalid group by clause.')
+    #    if len(set(attrs.values()))!=1:
+    #        raise Exception('[ERROR]: Group by attrs cannot have aggregate function')
+    #    if 'NORMAL' not in list(attrs.values()):
+    #        raise Exception('[ERROR]: Group by attrs cannot have aggregate function')
+    #else:
+    #    for elem in groupBy:
+    #        del att[elem]
+    #    if 'NORMAL' in list(att.values()):
+    #        raise Exception('[ERROR]: Invalid group by clause')
 
 
-    # conditions=reorder_where_clause(having)
-    # expression=parse_conditions(conditions)
+    #conditions=reorder_where_clause(having)
+    #expression=parse_conditions(conditions)
 
     return {
-        'group_by': groupBy
-        # 'conditions': expression
+        'group_by': groupBy,
+        #'conditions': expression
     }
 
 def parse_orderBy(orderBy_clause):

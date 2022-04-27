@@ -174,7 +174,7 @@ class Table:
         -Check primary key value, if the value already in prmkvalue, raise error.
         -Print essential information
         """
-
+        # TODO: typecheck?
         # TODO index add
         datainput = [data]
         newtemp = pd.DataFrame(datainput, columns=attrs)
@@ -253,8 +253,7 @@ class Table:
                 self.data[tuple(prmkvalue)] = attvalue
             else:
                 raise Exception('[ERROR]: Primary key value collision')
-
-
+        
     def serialize(self):
         pass
     
