@@ -321,13 +321,9 @@ class Table:
     # tag: is str
     # 'condition': [  where[i]['attr'], where[i]['value']  ]
     def search(self, attr, sym, tag, condition, groupbyFlag):
-        # attr: [] or *
-        # situation: number means different conditions
-        # groupbyFlag: true/false have group by
-        # condition: [], base on situation
-        # df = pd.DataFrame(self.datalist, columns = self.attrls)
+
         if self.flag == 0:
-            self.df = pd.DataFrame(self.datalist, columns = self.attrls)
+            self.df = pd.DataFrame(self.datalist, columns=self.attrls)
         operationList = {
             '=': 1,
             '>': 2,
@@ -368,10 +364,12 @@ class Table:
             else:
                 pass
             if tag:
+                condition[1].replace('"', '')
                 if attr == ['*']:
-                    return temp.loc[temp[condition[0]] == temp[condition[1]]]
+                    # print(temp)
+                    return temp.loc[temp[condition[0]] == condition[1][1:-1]]
                 #
-                return temp.loc[temp[condition[0]] == temp[condition[1]], attr]
+                return temp.loc[temp[condition[0]] == condition[1][1:-1], attr]
             if attr == ['*']:
                 return temp.loc[temp[condition[0]] == condition[1]]
             #
