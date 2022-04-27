@@ -51,14 +51,7 @@ class Table:
         print(info)
         np.save('index_info.npy', info)
         # create index
-        dict0 = {}
-        dict1 = {}
-        dict2 = {}
-        dict3 = {}
-        dict4 = {}
-        dict5 = {}
-        dict6 = {}
-        hashlist = [dict0, dict1, dict2, dict3, dict4, dict5, dict6]
+        hashlist = [{}, {}, {}, {}, {}, {}, {}]
         df = db.tables[table].search(['*'], [], [], [], False)
         length = df.shape[0]
         for i in range(length):
@@ -68,20 +61,7 @@ class Table:
             hashtable = HashTable(7)
             hash_index = hashtable.hash(value)
             # print(hash_index)
-            if hash_index == 0:
-                dict0[value] = row
-            if hash_index == 1:
-                dict1[value] = row
-            if hash_index == 2:
-                dict2[value] = row
-            if hash_index == 3:
-                dict3[value] = row
-            if hash_index == 4:
-                dict4[value] = row
-            if hash_index == 5:
-                dict5[value] = row
-            if hash_index == 6:
-                dict6[value] = row
+            hashlist[hash_index][value] = row
         # transfer list to array, save as .npy file
         alist = np.array(hashlist)
         # print(dict0.keys())
@@ -110,20 +90,7 @@ class Table:
                         index_info = index_info.tolist()
                         hashtable = HashTable(7)
                         hash_num = hashtable.hash(num)
-                        if hash_num == 0:
-                            return index_info[0]
-                        if hash_num == 1:
-                            return index_info[1]
-                        if hash_num == 2:
-                            return index_info[2]
-                        if hash_num == 3:
-                            return index_info[3]
-                        if hash_num == 4:
-                            return index_info[4]
-                        if hash_num == 5:
-                            return index_info[5]
-                        if hash_num == 6:
-                            return index_info[6]
+                        return index_info[hash_num]
             return None
 
     def drop_index(self, index_name, table):
@@ -152,85 +119,37 @@ class Table:
         else:
             raise Exception('[ERROR]: The index does not exist')
 
-    def index_search(self, attrs, condition):
-        '''
-        attrs: [attr1, attr2, ...]
-        condition:{attr: , value:, operation, }
-        '''
-        attr=condition['attr']
-        self.value_ = condition['value']
-        value= self.value_
-        operation=condition['operation']
-        idex_name=self.index[attr]
-        BTree=self.BTree[idex_name]
-
-        min_key=BTree.minKey()
-        max_key=BTree.max_key()
-
-        if operation=='=':
-            pks=[BTree[value]]
-            content=[]
-            for pk in pks:
-                content.append(self.data[pk])
-        
-        elif operation=='<':
-            pks=list(BTree.values(min=min_key, max=value, excludemin=False, excludemax=True)) #[pk1, pk2,...]
-            content=[]
-            for pk in pks:
-                content.append(self.data[pk])
-
-        elif operation=='>':
-            pks=list(BTree.values(min=value, max=max_key, excludemin=True, excludemax=False)) #[pk1, pk2,...]
-            content=[]
-            for pk in pks:
-                content.append(self.data[pk])
-
-        elif operation=='<=':
-            pks=list(BTree.values(min=min_key, max=value, excludemin=False, excludemax=False)) #[pk1, pk2,...]
-            content=[]
-            for pk in pks:
-                content.append(self.data[pk])
-
-        elif operation=='>=':
-            pks=list(BTree.values(min=value, max=max_key, excludemin=True, excludemax=False)) #[pk1, pk2,...]
-            content=[]
-            for pk in pks:
-                content.append(self.data[pk])
-
-        elif operation=='<>':
-            pk1=list(BTree.values(min=min_key, max=value, excludemin=False, excludemax=True)) #[pk1, pk2,...]
-            pk2=list(BTree.values(min=value, max=max_key, excludemin=True, excludemax=False)) #[pk1, pk2,...]
-            content=[]
-            for pk in pk1:
-                content.append(self.data[pk])    
-            for pk in pk2:
-                content.append(self.data[pk])   
-        att=self.attrls[len(pks):]
-
-        df=pd.DataFrame(content, columns=att)
-        my_df=pd.DataFrame()
-        for i in attrs:
-            my_df[i]=df[i]
-        return my_df
-
-    # TODO index add
+    # insert index info during insert operation
+    #remeber to call this function on each attributes
     def insert_index(self, attr, table, row, value):
         # check if index exists
         if os.path.exists('index_info.npy'):
             info = np.load('index_info.npy', allow_pickle=True)
             info = info.tolist()
             # check if the index was existed, index is the third attribute
-            i = 0
             for item in info:
-                if (item[1] == attr):
-                    dict0 = {}
-                    dict1 = {}
-                    dict2 = {}
-                    dict3 = {}
-                    dict4 = {}
-                    dict5 = {}
-                    dict6 = {}
+                if item[0] == table and ''.join(item[1]) == attr:
                     # got the information to find the index file
+                    index_name = item[2]
+                    if os.path.exists(table + '_' + ''.join(attr) + '_' + index_name + '.npy'):
+                        # extract the information from the index file
+                        alist = np.load(table + '_' + ''.join(attr) + '_' + index_name + '.npy', allow_pickle=True)
+                        hashlist = alist.tolist()
+                        #compute which hash dict should this row be
+                        hashtable = HashTable(7)
+                        hash_index = hashtable.hash(value)
+                        hashlist[hash_index][value] = row
+                        alist = np.array(hashlist)
+                        print(alist)
+                        if os.path.exists(table + '_' + ''.join(attr) + '_' + index_name + '.npy'):
+                            np.save(table + '_' + ''.join(attr) + '_' + index_name + '.npy', alist)
+
+    def delete_index(self, table, attr, value):
+        if os.path.exists('index_info.npy'):
+            info = np.load('index_info.npy', allow_pickle=True)
+            info = info.tolist()
+            for item in info:
+                if item[0] == table and ''.join(item[1]) == attr:
                     index_name = item[2]
                     if os.path.exists(table + '_' + ''.join(attr) + '_' + index_name + '.npy'):
                         # extract the information from the index file
@@ -239,35 +158,14 @@ class Table:
                         # compute which hash dict should this row be
                         hashtable = HashTable(7)
                         hash_index = hashtable.hash(value)
-                        if hash_index == 0:
-                            dict0[value] = row
-                        if hash_index == 1:
-                            dict1[value] = row
-                        if hash_index == 2:
-                            dict2[value] = row
-                        if hash_index == 3:
-                            dict3[value] = row
-                        if hash_index == 4:
-                            dict4[value] = row
-                        if hash_index == 5:
-                            dict5[value] = row
-                        if hash_index == 6:
-                            dict6[value] = row
+                        del hashlist[hash_index][value]
                         alist = np.array(hashlist)
-
+                        print(alist)
                         if os.path.exists(table + '_' + ''.join(attr) + '_' + index_name + '.npy'):
                             np.save(table + '_' + ''.join(attr) + '_' + index_name + '.npy', alist)
 
-    def insert(self, attrs: list, data: list) -> None:
-        # TODO index add
-        datainput=[data]
-        newtemp=pd.DataFrame(datainput,columns=attrs)
-        newdata=newtemp.iloc[0]
-        i=0
-        for attr in attrs:
-            self.insert_index(attr, self.name, newdata, data[i])
-            i+=1
 
+    def insert(self, attrs: list, data: list) -> None:
         """
         Add data into self.data as a hash table.
         TODO:
@@ -276,9 +174,16 @@ class Table:
         -Check primary key value, if the value already in prmkvalue, raise error.
         -Print essential information
         """
-
         # TODO: typecheck?
-        prmkvalue = [] # primary key
+        # TODO index add
+        datainput = [data]
+        newtemp = pd.DataFrame(datainput, columns=attrs)
+        newdata = newtemp.iloc[0]
+        i = 0
+        for attr in attrs:
+            self.insert_index(attr, self.name, newdata, data[i])
+            i += 1
+        prmkvalue = []
         attvalue = []
         if attrs==[]:
             # TODO: typecheck
@@ -348,33 +253,12 @@ class Table:
                 self.data[tuple(prmkvalue)] = attvalue
             else:
                 raise Exception('[ERROR]: Primary key value collision')
-
-
+        
     def serialize(self):
         pass
     
     def deserialize(self):
         pass
-
-    def delete_index(self, table, attr, value):
-        if os.path.exists('index_info.npy'):
-            info = np.load('index_info.npy', allow_pickle=True)
-            info = info.tolist()
-            for item in info:
-                if item[0] == table and ''.join(item[1]) == attr:
-                    index_name = item[2]
-                    if os.path.exists(table + '_' + ''.join(attr) + '_' + index_name + '.npy'):
-                        # extract the information from the index file
-                        alist = np.load(table + '_' + ''.join(attr) + '_' + index_name + '.npy', allow_pickle=True)
-                        hashlist = alist.tolist()
-                        # compute which hash dict should this row be
-                        hashtable = HashTable(7)
-                        hash_index = hashtable.hash(value)
-                        del hashlist[hash_index][value]
-                        alist = np.array(hashlist)
-                        print(alist)
-                        if os.path.exists(table + '_' + ''.join(attr) + '_' + index_name + '.npy'):
-                            np.save(table + '_' + ''.join(attr) + '_' + index_name + '.npy', alist)
 
     def delete(self, table_name, where):
         if where == []:
@@ -382,7 +266,7 @@ class Table:
             self.datalist = []
             for a in self.uniqueattr.keys():
                 self.uniqueattr[a] = {}
-            #self.BTree
+            # self.BTree
         elif len(where) > 1:
             raise Exception('[ERROR]: Mutiple where conditions is coming soon')
         elif len(where) == 1:
@@ -390,58 +274,48 @@ class Table:
                 raise Exception('[ERROR]: You should delete by one of the primary key!')
             else:
                 # TODO !!!!!!!!!!!!!!!!!
-                if where[0]['operation']=='=':
-                    value=where[0]['value']
+                if where[0]['operation'] == '=':
+                    value = where[0]['value']
                     try:
-                        value=int(value)
+                        value = int(value)
                     except:
                         pass
 
                     del self.data[tuple([value])]
 
-                    colindex=0
-                    keylist=list(self.attrs.keys())
+                    colindex = 0
+                    keylist = list(self.attrs.keys())
                     # find which column (get column index)
-                    while where[0]['attr']!=keylist[colindex]:
-                        colindex+=1
+                    while where[0]['attr'] != keylist[colindex]:
+                        colindex += 1
 
                     # interate whole datalist, find the row the user want to delete
-                    i=0
-                    deleteData=[]
+                    i = 0
+                    deleteData = []
                     for item in self.datalist:
-                        if item[colindex]==value:
-                            deleteData=item
+                        if item[colindex] == value:
+                            deleteData = item
                             break
-                        i+=1
+                        i += 1
 
                     del self.datalist[i]
 
-                    colNameList=list(self.attrs.keys())
+                    colNameList = list(self.attrs.keys())
                     # print(colNameList.keys())
                     # TODO
                     # delete unique list
-                    prmkColName=self.primary
+                    prmkColName = self.primary
                     for uniqAttName in self.uniqueattr.keys():
-                        index=0 # index of unique colname in whole attrName list
-                        while uniqAttName!=colNameList[index]:
-                            index+=1
-                        uniqValue=deleteData[index]
+                        index = 0  # index of unique colname in whole attrName list
+                        while uniqAttName != colNameList[index]:
+                            index += 1
+                        uniqValue = deleteData[index]
                         del self.uniqueattr[uniqAttName][uniqValue]
 
                     # TODO add delete index
-                    i=0
+                    i = 0
                     for attrname in colNameList:
                         self.delete_index(table_name, attrname, deleteData[i])
-                        i+=1
-
-                elif where[0]['operation']=='<>':
-                    value = where[0]['value']
-                    try:
-                        value=int(value)
-                    except:
-                        pass
-                    self.data={self.data[value]}
-                    self.df=self.df[self.df[where[0]['attr']]==value]
 
     # res = table.search('*', '=', False, ['id', 5], False)
     # tag: is str

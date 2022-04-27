@@ -915,20 +915,21 @@ def show(action):
     else:
         raise Exception('[ERROR] Invalid command. help: show databases/tables ')
 
+
 def update(action):
     # TODO
-    if action[0].upper()=='UPDATE':
+    if action[0].upper() == 'UPDATE':
         action.pop(0)
-    table_name=action.pop(0)
-    if action.pop(0).upper()!='SET': raise Exception('[ERROR]: Invalid command.')
+    table_name = action.pop(0)
+    if action.pop(0).upper() != 'SET': raise Exception('[ERROR]: Invalid command.')
 
-    set_dict=[]
-    while action[0].upper()!='WHERE':
-        condition=action.pop(0).strip(', ')
+    set_dict = []
+    while action[0].upper() != 'WHERE':
+        condition = action.pop(0).strip(', ')
         if '=' not in condition:
             raise Exception('[ERROR]: Invalid command.')
-        tmp=condition.split('=')
-        tmpvalue=tmp[1]
+        tmp = condition.split('=')
+        tmpvalue = tmp[1]
         if '.' in tmpvalue:
             try:
                 tmpvalue = float(tmpvalue)
@@ -946,23 +947,23 @@ def update(action):
             'attr': tmp[0].lower(),
             'value': tmpvalue,
         })
-        if action==[]:
+        if action == []:
             break
-        
-    where_expression=[]
+
+    where_expression = []
     if action:
-        if action[0].upper()!='WHERE':
+        if action[0].upper() != 'WHERE':
             raise Exception('[ERROR]: Invalid command.')
-        action.pop(0)    #Pop where
-        conditions=reorder_where_clause(action)
+        action.pop(0)  # Pop where
+        conditions = reorder_where_clause(action)
 
         # where clause poland expression
-        where_expression=parse_conditions(conditions)   # Parse where clause
+        where_expression = parse_conditions(conditions)  # Parse where clause
     return {
         'query_keyword': 'update',
-        'table': table_name,    # str->table name
-        'set': set_dict,    # list->[{attr:, value:}]
-        'where': where_expression,  #   list-> like where clause
+        'table': table_name,  # str->table name
+        'set': set_dict,  # list->[{attr:, value:}]
+        'where': where_expression,  # list-> like where clause
     }
 
 def delete(action):
@@ -1075,8 +1076,8 @@ def startParse(commandline):
 
 
 # TEST
-# action=startParse("select * from students where name='jack'")
-# print(action)
+# action=startParse("SELECT * FROM b inner JOIN A on b.name=A.name where b.id=5;")
+# print(action['where'].type)
 # print(startParse("delete from test1 where a=2"))
 # print(startParse('insert into test4 (a, b) values (100000, 100000)'))
 # print(startParse('insert into test1 (a, b) values (2000, 23)'))
@@ -1090,7 +1091,7 @@ def startParse(commandline):
 # print(demoQuery)
 # print(startParse(demoQuery))
 
-# print(startParse('UPDATE test0 SET a=\'haha\', b=100 WHERE a=5'))
+
 # print(startParse("SELECT a,b FROM test0 INNER JOIN test2 on test0.a=test2.a where test0.a>5"))
 # print(startParse("select * from table A where id=5;"))
 # print(startParse("SELECT * FROM b full outer JOIN A on b.name=A.name where b.id=5;"))

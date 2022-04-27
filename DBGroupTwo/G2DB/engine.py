@@ -82,7 +82,7 @@ class Engine:
     # insert into perSON (id, position, name, address) values (2, 'eater', 'Yijing', 'homeless')
     def insertTable(self, db, table_name, attrs, data):
         db.tables[table_name].insert(attrs, data)
-        # print(db.tables[table_name].datalist)
+        #print(db.tables[table_name].datalist)
         return db
 
     def selectQuery(self, db, attrs, tables, where):
@@ -127,7 +127,7 @@ class Engine:
                 # where condition has str-->''
                 if item['tag'] == 1:
                     strConditionList.append(item)
-                    where.remove(item)
+                    where.remmove(item)
 
         tbl = tables[::]
 
@@ -136,23 +136,15 @@ class Engine:
             condition = strConditionList.pop(0)  # per where condition
             # print ("condition")
             # print(condition)
-            # Get first three elems
+            # Get first three elems 
             for table_name in tables:
                 if condition['attr'] in db.tables[table_name].attrls:
-
                     tc.append(table_name)
                     tbl.remove(table_name)
                     used_attrs = used_attrs + db.tables[table_name].attrls
-                    # print(tc)
-                    # print(used_attrs)
-                    # # exit()
-                    # print(table_col_dic)
-                    # print(condition)
                     if (condition['attr'] not in table_col_dic[table_name]) & (table_col_dic[table_name] != ['*']):
-                        # print(111111111)
                         table_col_dic[table_name].append(condition['attr'])
-                    # print(table_col_dic)
-                    # exit()
+
             for table_name in tables:
                 if condition['value'] in db.tables[table_name].attrls:
                     tc.append(table_name)
@@ -205,16 +197,15 @@ class Engine:
                 tbl.pop(0)
             else:
                 tbl.pop(0)
-
-        # # TODO delete vc change vc--->where
-        # ###########################
+        # TODO delete vc change vc--->where
+        ############################
         # print({
         #     'ta': table_col_dic,
         #     'tc': tc,
         #     'where': where,
-        #
+        # 
         # })
-        # exit()
+
         if tc:
             to = {}
             for tname in table_col_dic.keys():
@@ -241,8 +232,6 @@ class Engine:
         ############
         elif len(tables) == 1:
             table = db.tables[tables[0]]
-        # print(11111111111111111111)
-        # TODO shangmian==========================
 
         # print(table)
         # print(attrs)
@@ -253,13 +242,11 @@ class Engine:
         # print(where)
         # exit()
         # TODO add Priority order of and and or
-
         where_len = len(where)
         if where_len == 1:
             cond = {'tag': where[0]['tag'], 'sym': where[0]['operation'],
                     'condition': [where[0]['attr'], where[0]['value']]}
             restable = self.subselect(table, attrs, cond)
-
         elif where_len == 0:
             cond = {}
             restable = self.subselect(table, attrs, cond)
@@ -302,14 +289,15 @@ class Engine:
                 df2 = dataframe_list.pop()
                 newdf = pd.merge(df1, df2, on=attList, how='outer',sort=False)
                 dataframe_list.append(newdf)
-
             # TODO
-            if len(dataframe_list)==0:
+            if len(dataframe_list) == 0:
                 # print("Empty result! Find no data. Please check the 'WHERE' condition. ")
                 restable = None
             else:
-            # only has one dataframe left at this time
-                restable=dataframe_list.pop() # only has one dataframe left at this time
+                # only has one dataframe left at this time
+                restable = dataframe_list.pop()  # only has one dataframe left at this time
+
+
 
         return restable
 
@@ -345,11 +333,11 @@ class Engine:
     def delete(self, db, name, where):
         db.tables[name].delete(name, where)
         return db
-    # TODO
+
     def update(self, db, name, where, set):
         db = self.delete(db, name, where)
-        attrlist=[]
-        valuelist=[]
+        attrlist = []
+        valuelist = []
         for eachset in set:
             attrlist.append(eachset['attr'])
             valuelist.append(eachset['value'])
