@@ -924,39 +924,55 @@ def show(action):
     else:
         raise Exception('[ERROR] Invalid command. help: show databases/tables ')
 
-def update(action):
-    
-    if action[0].upper()=='UPDATE':
-        action.pop()
-    table_name=action.pop()
-    if action.pop().upper()!='SET': raise Exception('[ERROR]: Invalid command.')
 
-    set_dict=[]
-    while action[0].upper()!='WHERE':
-        condition=action.pop().strip(', ')
+def update(action):
+    # TODO
+    if action[0].upper() == 'UPDATE':
+        action.pop(0)
+    table_name = action.pop(0)
+    if action.pop(0).upper() != 'SET': raise Exception('[ERROR]: Invalid command.')
+
+    set_dict = []
+    while action[0].upper() != 'WHERE':
+        condition = action.pop(0).strip(', ')
         if '=' not in condition:
             raise Exception('[ERROR]: Invalid command.')
-        tmp=condition.split('=')
+        tmp = condition.split('=')
+        tmpvalue = tmp[1]
+        if '.' in tmpvalue:
+            try:
+                tmpvalue = float(tmpvalue)
+            except:
+                raise Exception('[ERROR]: Invalid command')
+        elif "'" in tmpvalue:
+            tmpvalue = tmpvalue.strip("()' ")
+        else:
+            try:
+                tmpvalue = int(tmpvalue)
+            except:
+                raise Exception('[ERROR]: Invalid command')
+
         set_dict.append({
             'attr': tmp[0].lower(),
-            'value': tmp[1],
+            'value': tmpvalue,
         })
-        if action==[]:
+        if action == []:
             break
-        
-    where_expression=[]
+
+    where_expression = []
     if action:
-        if action[0].upper()!='WHERE':
+        if action[0].upper() != 'WHERE':
             raise Exception('[ERROR]: Invalid command.')
-        action.pop()    #Pop where
-        conditions=reorder_where_clause(action)
+        action.pop(0)  # Pop where
+        conditions = reorder_where_clause(action)
 
         # where clause poland expression
-        where_expression=parse_conditions(conditions)   # Parse where clause
+        where_expression = parse_conditions(conditions)  # Parse where clause
     return {
-        'table': table_name,    # str->table name
-        'set': set_dict,    # list->[{attr:, value:}]
-        'where': where_expression,  #   list-> like where clause
+        'query_keyword': 'update',
+        'table': table_name,  # str->table name
+        'set': set_dict,  # list->[{attr:, value:}]
+        'where': where_expression,  # list-> like where clause
     }
 
 def delete(action):
