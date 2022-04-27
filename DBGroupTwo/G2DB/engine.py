@@ -545,13 +545,11 @@ class Engine:
                     restable = self.selectQuery(db, action['attrs'], action['tables'], action['where'])
                 
                 if action["is_order_by"] != -1:
-                    print("begin ordering")
                     if action["orderby"]["order"] == "ASC":
                         restable = restable.sort_values(by=action["orderby"]["order_by"], ascending=True)
                     else:
                         restable = restable.sort_values(by=action["orderby"]["order_by"], ascending=False)
 
-                print("haha begin print")
                 # TODO add if is None
                 if not restable.empty:
                     print(restable)
