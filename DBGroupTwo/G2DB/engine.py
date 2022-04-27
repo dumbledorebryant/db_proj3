@@ -241,8 +241,32 @@ class Engine:
             df = Database('jointempdb').df_(table1, table2, ao)
         return df
 
+    # TODO
+    def check_delete(self, db, table, where, oritablename):
+        col = where[0]['attr']
+        # print(db.tables[table].data)
+        foreignk = table.foreign
+        if foreignk=={}:
+            return
+        ref_info = list(foreignk.values())
+        ref_info=ref_info[0]
+        # print(ref_info[0])
+        # ref_info=[{'schema': ref_table, 'columns': ref_columns, 'on_delete': on_delete.upper(), 'on_update': on_update.upper()}]
+        if oritablename == ref_info['schema'][0]:
+            refc = ref_info['columns'][0]
+            refc=refc[0]
+            if refc == col:
+                nwhere = []
+                nwhere.append({'attr': table.primary[0], 'operation': where[0]['operation'], 'value': where[0]['value']})
+                table.delete(table.name, nwhere)
+
     def delete(self, db, name, where):
         db.tables[name].delete(name, where)
+        # TODO
+        tables = db.tables
+        for table in tables.keys():
+            # print(table)
+            self.check_delete(db, tables[table], where, name)
         return db
 
     def update(self, db, name, where, set):
