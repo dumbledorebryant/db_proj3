@@ -48,7 +48,6 @@ class Table:
 
         info.append([table, attr, index_name])
         infoarr = np.array(info)
-        print(info)
         np.save('index_info.npy', info)
         # create index
         hashlist = [{}, {}, {}, {}, {}, {}, {}]
@@ -110,8 +109,6 @@ class Table:
                     np.save('index_info.npy', infoarr)
                     # delete the index.npy file
                     if os.path.exists(table + '_' + ''.join(attr) + '_' + index_name + '.npy'):
-                        print(table + '_' + ''.join(attr) + '_' + index_name + '.npy')
-                        print(info)
                         os.remove(table + '_' + ''.join(attr) + '_' + index_name + '.npy')
                     else:
                         raise Exception('[ERROR]: The index does not exist')
@@ -140,7 +137,6 @@ class Table:
                         hash_index = hashtable.hash(value)
                         hashlist[hash_index][value] = row
                         alist = np.array(hashlist)
-                        print(alist)
                         if os.path.exists(table + '_' + ''.join(attr) + '_' + index_name + '.npy'):
                             np.save(table + '_' + ''.join(attr) + '_' + index_name + '.npy', alist)
 
@@ -160,7 +156,6 @@ class Table:
                         hash_index = hashtable.hash(value)
                         del hashlist[hash_index][value]
                         alist = np.array(hashlist)
-                        print(alist)
                         if os.path.exists(table + '_' + ''.join(attr) + '_' + index_name + '.npy'):
                             np.save(table + '_' + ''.join(attr) + '_' + index_name + '.npy', alist)
 
