@@ -83,7 +83,7 @@ class Engine:
     # insert into perSON (id, position, name, address) values (2, 'eater', 'Yijing', 'homeless')
     def insertTable(self, db, table_name, attrs, data):
         db.tables[table_name].insert(attrs, data)
-        print(db.tables[table_name].datalist)
+        # print(db.tables[table_name].datalist)
         return db
 
     
@@ -152,7 +152,6 @@ class Engine:
 
 
     def selectQuery(self, db, attrs, tables, where):
-
         # Return restable
         """
         ats = list(attrs.keys())
@@ -365,10 +364,16 @@ class Engine:
 
         return restable
 
+    ##########################################
+    # where:
+    # 'tag':        where[i]['tag'],
+    # 'sym':        where[i]['operation'],
+    # 'condition': [  where[i]['attr'], where[i]['value']  ]
+    ##########################################
     def subselect(self, table, attrs, where):
         sym = ''
-        tag = False
-        gb = False
+        tag = False # is not str
+        gb = False  # groupby
         condition = []
         if where:
             sym = where['sym']
@@ -398,11 +403,11 @@ class Engine:
         return db
 
     def createIndex(self, db, table, iname, attr):
-        db = db.tables[table].add_index(attr, iname)
+        db = db.tables[table].add_index(attr, iname,db,table)
         return db
 
     def dropIndex(self, db, table, iname):
-        db = db.tables[table].drop_index(iname)
+        db = db.tables[table].drop_index(iname,table)
         return db
 
     # lauch function: receieve a command and send to execution function/
@@ -444,8 +449,7 @@ class Engine:
                     tableName = 'test' + str(testNum)
                     demoQuery += 'create table ' + tableName + ' (' + col1name + ' int not_null unique, ' + col2name + ' int) primary key (' + col1name + ');\n'
                     for i in range(dataRange + 1):
-                        demoQuery += 'insert into ' + tableName + ' (' + col1name + ', ' + col2name + ') values (' + str(
-                            i) + ', 1);\n'
+                        demoQuery += 'insert into ' + tableName + ' (' + col1name + ', ' + col2name + ') values (' + str(i) + ', 1);\n'
                     testNum += 1
                 demoQuery += 'save database demo;\n'
                 # create query over
